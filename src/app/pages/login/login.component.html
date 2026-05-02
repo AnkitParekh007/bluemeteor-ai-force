@@ -1,0 +1,106 @@
+<div
+	class="flex min-h-[100dvh] min-h-screen w-full flex-col bg-white text-slate-900 lg:flex-row dark:bg-slate-950 dark:text-slate-100"
+>
+	<!-- Left: sign-in (full height on desktop) -->
+	<div
+		class="flex w-full flex-1 flex-col justify-center bg-slate-50 px-8 py-12 sm:px-12 lg:w-1/2 lg:min-h-[100dvh] lg:px-16 xl:px-24 dark:bg-slate-900"
+	>
+		<div class="mx-auto w-full max-w-md">
+			<h1
+				class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white"
+			>
+				Welcome to Bluemeteor AI Force
+			</h1>
+			<p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+				Sign in with your workspace email and password.
+			</p>
+
+			<form class="mt-10 flex flex-col gap-6" (ngSubmit)="onSubmit()">
+				<div class="flex flex-col gap-2">
+					<label
+						for="email"
+						class="text-sm font-medium text-slate-700 dark:text-slate-300"
+						>Email</label
+					>
+					<p-iconfield iconPosition="left">
+						<p-inputicon><i class="pi pi-envelope text-slate-400"></i></p-inputicon>
+						<input
+							id="email"
+							type="email"
+							pInputText
+							[fluid]="true"
+							name="email"
+							autocomplete="username"
+							placeholder="you@company.com"
+							[(ngModel)]="email"
+							(ngModelChange)="clearError()"
+						/>
+					</p-iconfield>
+				</div>
+
+				<div class="flex flex-col gap-2">
+					<label
+						for="password-field"
+						class="text-sm font-medium text-slate-700 dark:text-slate-300"
+						>Password</label
+					>
+					<p-password
+						inputId="password-field"
+						name="password"
+						[(ngModel)]="password"
+						(ngModelChange)="clearError()"
+						placeholder="Enter your password"
+						[feedback]="false"
+						[toggleMask]="true"
+						styleClass="w-full"
+						inputStyleClass="w-full rounded-lg border-gray-200 dark:border-slate-600"
+						[fluid]="true"
+					/>
+				</div>
+
+				@if (auth.error()) {
+					<p class="text-sm font-medium text-red-600 dark:text-red-400" role="alert">
+						{{ auth.error() }}
+					</p>
+				}
+
+				<p-button
+					type="submit"
+					label="Enter your AI workspace"
+					icon="pi pi-bolt"
+					[fluid]="true"
+					severity="primary"
+					[loading]="isSubmitting()"
+					[disabled]="isSubmitting()"
+					styleClass="w-full rounded-lg font-semibold !border-0 !bg-gradient-to-r !from-cyan-600 !to-violet-600 !text-white shadow-md shadow-cyan-600/25 hover:!from-cyan-500 hover:!to-violet-500 focus-visible:!ring-2 focus-visible:!ring-cyan-400/50 dark:shadow-cyan-900/30"
+				/>
+			</form>
+
+			@if (env.enableMockAgents) {
+				<p
+					class="mt-6 rounded-lg border border-cyan-200/80 bg-cyan-50/80 px-3 py-2 text-xs leading-relaxed text-cyan-950 dark:border-cyan-800/60 dark:bg-cyan-950/40 dark:text-cyan-100"
+				>
+					<strong class="font-semibold">Mock catalog mode.</strong> Submit skips
+					authentication and opens the dashboard with local agents only.
+				</p>
+			}
+
+			<p class="mt-8 text-center text-xs text-slate-400 lg:text-left dark:text-slate-500">
+				Secure access · Bluemeteor AI Force
+			</p>
+		</div>
+	</div>
+
+	<!-- Right: banner — edge-to-edge, full viewport height on large screens -->
+	<div class="relative min-h-[36vh] w-full flex-1 overflow-hidden lg:min-h-[100dvh] lg:w-1/2">
+		<img
+			src="assets/images/agents-login-banner.png"
+			alt=""
+			class="absolute inset-0 h-full w-full object-cover object-center"
+			width="1200"
+			height="800"
+			decoding="async"
+			fetchpriority="high"
+		/>
+	</div>
+</div>

@@ -1,0 +1,87 @@
+<div class="mx-auto max-w-4xl space-y-6 text-slate-800 dark:text-slate-100">
+	<div class="flex items-center justify-between gap-4">
+		<div>
+			<h1 class="text-xl font-semibold">Agent readiness</h1>
+			<p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+				Internal demo view — scores reflect mock + config completeness.
+			</p>
+		</div>
+		<a
+			routerLink="/agents"
+			class="text-sm font-medium text-violet-700 hover:underline dark:text-violet-300"
+			>Agents</a
+		>
+	</div>
+
+	<div
+		class="rounded-xl border border-amber-200/60 bg-amber-50/80 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100"
+	>
+		<strong class="font-semibold">Recommendations:</strong>
+		<ul class="mt-2 list-inside list-disc space-y-1">
+			<li>
+				Connect NestJS orchestrator when
+				<code class="rounded bg-black/10 px-1">enableMockAgents</code> flips off.
+			</li>
+			<li>Add RAG / knowledge retrieval beyond static sources.</li>
+			<li>Enforce approvals server-side for critical tools.</li>
+			<li>Ship audit logging + streaming events from backend.</li>
+		</ul>
+	</div>
+
+	<div
+		class="overflow-hidden rounded-xl border border-violet-200/60 bg-white dark:border-indigo-800 dark:bg-slate-900/80"
+	>
+		<table class="w-full text-left text-sm">
+			<thead
+				class="border-b border-violet-100 bg-violet-50/80 text-xs font-semibold uppercase text-slate-600 dark:border-indigo-900 dark:bg-indigo-950/50 dark:text-slate-300"
+			>
+				<tr>
+					<th class="px-4 py-3">Agent</th>
+					<th class="px-4 py-3">Score</th>
+					<th class="px-4 py-3">Checks</th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (row of rows(); track row.slug) {
+					<tr class="border-b border-violet-100/80 dark:border-indigo-900/60">
+						<td class="px-4 py-3 font-mono font-semibold">{{ row.slug }}</td>
+						<td class="px-4 py-3">
+							<span
+								class="inline-flex min-w-[3rem] justify-center rounded-full px-2 py-0.5 text-xs font-bold"
+								[class.bg-emerald-100]="row.score >= 80"
+								[class.text-emerald-900]="row.score >= 80"
+								[class.dark:bg-emerald-950]="row.score >= 80"
+								[class.dark:text-emerald-100]="row.score >= 80"
+								[class.bg-amber-100]="row.score >= 60 && row.score < 80"
+								[class.text-amber-950]="row.score >= 60 && row.score < 80"
+								[class.bg-slate-100]="row.score < 60"
+								>{{ row.score }}</span
+							>
+						</td>
+						<td class="px-4 py-3">
+							<ul class="space-y-1 text-xs">
+								@for (c of row.checks; track c.label) {
+									<li class="flex flex-wrap items-baseline gap-2">
+										@if (c.ok) {
+											<span class="text-emerald-600 dark:text-emerald-400"
+												>✓</span
+											>
+										} @else {
+											<span class="text-slate-400">○</span>
+										}
+										<span>{{ c.label }}</span>
+										@if (c.note) {
+											<span class="text-slate-500 dark:text-slate-400"
+												>— {{ c.note }}</span
+											>
+										}
+									</li>
+								}
+							</ul>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+</div>

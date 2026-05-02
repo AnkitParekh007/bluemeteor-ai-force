@@ -1,0 +1,125 @@
+@let ag = agent();
+@let sess = activeSession();
+
+<div #scrollRoot class="flex min-h-0 flex-1 flex-col">
+	<div data-thread-scroll class="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3 sm:px-4">
+		@if (activeRun(); as arun) {
+			@if (arun.steps.length) {
+				<div
+					class="rounded-xl border border-violet-200/60 bg-violet-50/40 px-3 py-2 dark:border-indigo-800 dark:bg-indigo-950/40"
+				>
+					<p
+						class="text-[10px] font-bold uppercase tracking-wide text-violet-700 dark:text-violet-300"
+					>
+						Run · {{ arun.status }}
+					</p>
+					<ul class="mt-2 space-y-1">
+						@for (st of arun.steps; track st.id) {
+							<li
+								class="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300"
+							>
+								<span
+									class="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full"
+									[class.bg-emerald-500]="st.status === 'completed'"
+									[class.bg-amber-400]="st.status === 'running'"
+									[class.bg-slate-400]="st.status === 'pending'"
+								></span>
+								<span
+									><span class="font-semibold">{{ st.title }}</span> —
+									{{ st.status }}</span
+								>
+							</li>
+						}
+					</ul>
+				</div>
+			}
+		}
+
+		@if (messages().length === 0 && !thinking()) {
+			<div class="flex flex-col items-center justify-center gap-4 px-4 py-12 text-center">
+				<div
+					class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 via-violet-600 to-indigo-700 text-lg font-bold text-white shadow-lg"
+				>
+					{{ ag.name.slice(0, 2) }}
+				</div>
+				<div>
+					<p class="text-base font-semibold text-slate-900 dark:text-white">
+						Start a session with {{ ag.name }}
+					</p>
+					<p class="mt-1 max-w-md text-sm text-slate-600 dark:text-slate-400">
+						{{ sess?.title ?? 'Pick a quick task below or describe what you need.' }}
+					</p>
+				</div>
+				@if (suggestedChips().length) {
+					<div class="flex max-w-lg flex-wrap justify-center gap-2">
+						@for (c of suggestedChips(); track c) {
+							<span
+								class="rounded-full border border-violet-200/70 bg-violet-50/80 px-3 py-1 text-xs font-medium text-violet-900 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-violet-100"
+								>{{ c }}</span
+							>
+						}
+					</div>
+				}
+			</div>
+		}
+
+		@for (msg of messages(); track msg.id) {
+			<div
+				class="flex w-full"
+				[class.justify-end]="msg.role === 'user'"
+				[class.justify-start]="msg.role !== 'user'"
+			>
+				@if (msg.role === 'system' || msg.role === 'tool') {
+					<div
+						class="max-w-[min(100%,48rem)] rounded-lg border border-violet-200/50 bg-violet-50/50 px-3 py-1.5 text-[11px] text-slate-600 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-slate-400"
+					>
+						<span
+							class="font-mono font-semibold uppercase text-violet-600 dark:text-violet-400"
+							>{{ msg.role }}</span
+						>
+						<span class="mx-2">·</span>
+						<span class="whitespace-pre-wrap">{{ msg.content }}</span>
+					</div>
+				} @else {
+					<div
+						class="max-w-[min(100%,42rem)] rounded-2xl px-3.5 py-2.5 text-sm shadow-sm"
+						[class.bg-gradient-to-br]="msg.role === 'user'"
+						[class.from-cyan-600]="msg.role === 'user'"
+						[class.to-violet-700]="msg.role === 'user'"
+						[class.text-white]="msg.role === 'user'"
+						[class.bg-slate-100]="msg.role === 'agent'"
+						[class.text-slate-800]="msg.role === 'agent'"
+						[class.dark:bg-slate-800]="msg.role === 'agent'"
+						[class.dark:text-slate-100]="msg.role === 'agent'"
+					>
+						<div class="whitespace-pre-wrap leading-relaxed">{{ msg.content }}</div>
+						<div
+							class="mt-1 flex flex-wrap items-center gap-2 text-[10px] opacity-80"
+							[class.text-cyan-100]="msg.role === 'user'"
+							[class.text-slate-500]="msg.role === 'agent'"
+						>
+							{{ msg.createdAt | date: 'shortTime' }}
+							@if (msg.status === 'streaming') {
+								<span class="inline-flex items-center gap-1">
+									<i class="pi pi-spinner animate-spin text-[10px]"></i>
+									streaming
+								</span>
+							}
+						</div>
+					</div>
+				}
+			</div>
+		}
+
+		@if (thinking() || isStreaming()) {
+			<div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+				<i class="pi pi-spinner animate-spin"></i>
+				@if (isStreaming()) {
+					Streaming…
+				} @else {
+					Agent is thinking…
+				}
+			</div>
+		}
+	</div>
+</div>

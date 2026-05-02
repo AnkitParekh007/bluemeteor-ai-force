@@ -1,0 +1,11 @@
+<div
+	class="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-violet-50/40 to-cyan-50/35 dark:from-slate-950 dark:via-indigo-950/50 dark:to-cyan-950/25"
+>
+	<app-header />
+	<div class="flex min-h-0 min-w-0 flex-1">
+		<app-sidenav />
+		<main class="min-w-0 flex-1 overflow-auto p-5 sm:p-6 lg:p-8">
+			<router-outlet />
+		</main>
+	</div>
+</div>
