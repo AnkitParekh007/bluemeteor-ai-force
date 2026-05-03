@@ -23,6 +23,7 @@ import { SecurityModule } from './security/security.module';
 import { ObservabilityModule } from './observability/observability.module';
 import { AdminModule } from './admin/admin.module';
 import { PilotModule } from './pilot/pilot.module';
+import { PilotImprovementModule } from './pilot-improvement/pilot-improvement.module';
 
 @Module({
 	imports: [
@@ -77,6 +78,7 @@ import { PilotModule } from './pilot/pilot.module';
 		ObservabilityModule,
 		AdminModule,
 		PilotModule,
+		PilotImprovementModule,
 	],
 	controllers: [AppController],
 	providers: [

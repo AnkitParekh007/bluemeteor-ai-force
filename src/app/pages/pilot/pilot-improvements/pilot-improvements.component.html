@@ -1,0 +1,459 @@
+<div class="space-y-6 p-6">
+
+  <!-- Header -->
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Pilot Improvements</h1>
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        Triage feedback → generate recommendations → track improvements → validate with evaluations.
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <button
+        (click)="runTriage()"
+        [disabled]="actionLoading()"
+        class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50">
+        {{ actionLoading() ? 'Working…' : 'Run triage' }}
+      </button>
+      <button
+        (click)="generateRecommendations()"
+        [disabled]="actionLoading()"
+        class="rounded-lg border border-violet-300 px-4 py-2 text-sm font-medium text-violet-700 hover:bg-violet-50 disabled:opacity-50 dark:border-violet-700 dark:text-violet-300 dark:hover:bg-violet-900/20">
+        Generate recommendations
+      </button>
+    </div>
+  </div>
+
+  <!-- Success / Error banners -->
+  @if (successMsg()) {
+    <div class="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
+      {{ successMsg() }}
+    </div>
+  }
+  @if (error()) {
+    <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Nav tabs -->
+  <div class="flex gap-1 border-b border-slate-200 dark:border-slate-700">
+    @for (tab of [
+      {id: 'overview', label: 'Overview'},
+      {id: 'triage', label: 'Feedback queue'},
+      {id: 'backlog', label: 'Improvement backlog'},
+      {id: 'regression', label: 'Agent regression'},
+      {id: 'report', label: 'Improvement report'}
+    ]; track tab.id) {
+      <button
+        (click)="setView(tab.id)"
+        [class.border-violet-600]="view() === tab.id"
+        [class.text-violet-600]="view() === tab.id"
+        [class.border-transparent]="view() !== tab.id"
+        [class.text-slate-500]="view() !== tab.id"
+        class="border-b-2 px-4 py-2 text-sm font-medium transition-colors hover:text-violet-600 dark:hover:text-violet-400">
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <!-- Loading state -->
+  @if (loading()) {
+    <div class="py-12 text-center text-sm text-slate-500 dark:text-slate-400">Loading…</div>
+  }
+
+  <!-- ══════════════════════════════════════ OVERVIEW ══════════════════════════════════════ -->
+  @if (!loading() && view() === 'overview') {
+    <section class="space-y-6">
+
+      <!-- Stat cards -->
+      <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        @for (card of overviewCards(); track card.label) {
+          <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ card.label }}</p>
+            <p class="mt-1 text-2xl font-bold" [class]="card.color">{{ card.value }}</p>
+          </div>
+        }
+      </div>
+
+      <!-- Category breakdown -->
+      @if (triageStats()?.byCategory?.length) {
+        <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
+          <h2 class="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Issue categories</h2>
+          <div class="space-y-2">
+            @for (cat of triageStats()!.byCategory | slice:0:8; track cat.category) {
+              <div class="flex items-center gap-3">
+                <span class="w-36 truncate text-xs text-slate-600 dark:text-slate-400">{{ formatCategory(cat.category) }}</span>
+                <div class="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+                  <div class="h-2 rounded-full bg-violet-500" [style.width.%]="(cat._count._all / (triageStats()!.byCategory[0]._count._all || 1)) * 100"></div>
+                </div>
+                <span class="w-6 text-right text-xs font-medium text-slate-700 dark:text-slate-300">{{ cat._count._all }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Backlog by status -->
+      @if (backlogStats()?.byStatus?.length) {
+        <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
+          <h2 class="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Backlog by status</h2>
+          <div class="flex flex-wrap gap-2">
+            @for (s of backlogStats()!.byStatus; track s.status) {
+              <span class="rounded-full px-3 py-1 text-xs font-medium" [class]="statusClass(s.status)">
+                {{ s.status.replace('_', ' ') }}: {{ s._count._all }}
+              </span>
+            }
+          </div>
+        </div>
+      }
+
+    </section>
+  }
+
+  <!-- ══════════════════════════════════════ TRIAGE / FEEDBACK QUEUE ══════════════════════════════════════ -->
+  @if (!loading() && view() === 'triage') {
+    <section class="space-y-4">
+
+      <!-- Filters -->
+      <div class="flex flex-wrap gap-3">
+        <select [(ngModel)]="filterAgent" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+          <option value="">All agents</option>
+          @for (slug of agentSlugs; track slug) {
+            <option [value]="slug">{{ slug }}</option>
+          }
+        </select>
+        <select [(ngModel)]="filterSeverity" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+          <option value="">All severities</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <select [(ngModel)]="filterStatus" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+          <option value="">All statuses</option>
+          <option value="new">New</option>
+          <option value="triaged">Triaged</option>
+          <option value="planned">Planned</option>
+          <option value="in_progress">In progress</option>
+          <option value="resolved">Resolved</option>
+          <option value="wont_fix">Won't fix</option>
+        </select>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
+        <table class="w-full text-sm">
+          <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50">
+            <tr>
+              <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Date</th>
+              <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Agent</th>
+              <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Category</th>
+              <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Severity</th>
+              <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Status</th>
+              <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Summary</th>
+              <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+            @for (item of filteredTriage(); track item.id) {
+              <tr
+                (click)="selectTriageItem(item)"
+                class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/30"
+                [class.bg-violet-50]="selectedTriageItem()?.id === item.id"
+                [class.dark:bg-violet-900/10]="selectedTriageItem()?.id === item.id">
+                <td class="whitespace-nowrap px-4 py-3 text-slate-500">{{ shortDate(item.createdAt) }}</td>
+                <td class="px-4 py-3 font-mono text-xs text-slate-700 dark:text-slate-300">{{ item.agentSlug }}</td>
+                <td class="px-4 py-3 text-slate-600 dark:text-slate-400">{{ formatCategory(item.category) }}</td>
+                <td class="px-4 py-3">
+                  <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="severityClass(item.severity)">
+                    {{ item.severity }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="statusClass(item.status)">
+                    {{ item.status.replace('_', ' ') }}
+                  </span>
+                </td>
+                <td class="max-w-xs truncate px-4 py-3 text-slate-600 dark:text-slate-400">{{ item.summary }}</td>
+                <td class="px-4 py-3">
+                  <div class="flex gap-1">
+                    <button
+                      (click)="$event.stopPropagation(); createEvalCaseFromTriage(item)"
+                      class="rounded px-2 py-1 text-xs text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20">
+                      + Eval case
+                    </button>
+                    @if (item.status !== 'resolved') {
+                      <button
+                        (click)="$event.stopPropagation(); updateTriageStatus(item, 'resolved')"
+                        class="rounded px-2 py-1 text-xs text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20">
+                        Resolve
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+              <!-- Detail drawer -->
+              @if (selectedTriageItem()?.id === item.id) {
+                <tr class="bg-violet-50 dark:bg-violet-900/10">
+                  <td colspan="7" class="px-6 py-4">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Root cause</p>
+                        <p class="mt-1 text-sm text-slate-700 dark:text-slate-300">{{ item.rootCause || '—' }}</p>
+                      </div>
+                      <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Recommended action</p>
+                        <p class="mt-1 text-sm text-slate-700 dark:text-slate-300">{{ item.recommendedAction || '—' }}</p>
+                      </div>
+                      <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Feedback ID</p>
+                        <p class="mt-1 font-mono text-xs text-slate-500">{{ item.feedbackId }}</p>
+                      </div>
+                      @if (item.resolvedAt) {
+                        <div>
+                          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Resolved at</p>
+                          <p class="mt-1 text-sm text-slate-700 dark:text-slate-300">{{ shortDate(item.resolvedAt) }}</p>
+                        </div>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            } @empty {
+              <tr>
+                <td colspan="7" class="py-12 text-center text-sm text-slate-400">No triage items match the current filters.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  <!-- ══════════════════════════════════════ IMPROVEMENT BACKLOG ══════════════════════════════════════ -->
+  @if (!loading() && view() === 'backlog') {
+    <section class="space-y-4">
+
+      <!-- Filters -->
+      <div class="flex flex-wrap gap-3">
+        <select [(ngModel)]="filterAgent" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+          <option value="">All agents</option>
+          @for (slug of agentSlugs; track slug) {
+            <option [value]="slug">{{ slug }}</option>
+          }
+        </select>
+        <select [(ngModel)]="filterPriority" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+          <option value="">All priorities</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <select [(ngModel)]="filterStatus" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+          <option value="">All statuses</option>
+          <option value="new">New</option>
+          <option value="accepted">Accepted</option>
+          <option value="in_progress">In progress</option>
+          <option value="implemented">Implemented</option>
+          <option value="validated">Validated</option>
+          <option value="rejected">Rejected</option>
+          <option value="closed">Closed</option>
+        </select>
+        <select [(ngModel)]="filterCategory" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+          <option value="">All categories</option>
+          <option value="prompt">Prompt</option>
+          <option value="workflow">Workflow</option>
+          <option value="skill_pack">Skill pack</option>
+          <option value="tool_planning">Tool planning</option>
+          <option value="rag_context">RAG context</option>
+          <option value="artifact_quality">Artifact quality</option>
+          <option value="evaluation_case">Evaluation case</option>
+          <option value="ui">UI</option>
+          <option value="performance">Performance</option>
+          <option value="safety">Safety</option>
+        </select>
+      </div>
+
+      <!-- Backlog list -->
+      <div class="space-y-3">
+        @for (item of filteredBacklog(); track item.id) {
+          <div
+            class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+            [class.border-violet-400]="selectedBacklogItem()?.id === item.id">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div class="flex-1 space-y-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-mono text-xs text-slate-400">{{ item.agentSlug }}</span>
+                  <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="severityClass(item.priority)">{{ item.priority }}</span>
+                  <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="statusClass(item.status)">{{ item.status.replace('_', ' ') }}</span>
+                  <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ formatCategory(item.category) }}</span>
+                </div>
+                <p class="font-medium text-slate-800 dark:text-white">{{ item.title }}</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.description | slice:0:120 }}{{ item.description.length > 120 ? '…' : '' }}</p>
+                @if (item.expectedImpact) {
+                  <p class="text-xs text-slate-400"><span class="font-medium">Expected impact:</span> {{ item.expectedImpact }}</p>
+                }
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                @if (item.status === 'new') {
+                  <button (click)="acceptBacklogItem(item)" [disabled]="actionLoading()" class="rounded px-2.5 py-1 text-xs font-medium text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 disabled:opacity-50">Accept</button>
+                  <button (click)="rejectBacklogItem(item)" [disabled]="actionLoading()" class="rounded px-2.5 py-1 text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50">Reject</button>
+                }
+                @if (item.status === 'accepted') {
+                  <button (click)="markBacklogImplemented(item)" [disabled]="actionLoading()" class="rounded px-2.5 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-50 disabled:opacity-50">Mark implemented</button>
+                }
+                @if (item.status === 'implemented') {
+                  <button (click)="markBacklogValidated(item)" [disabled]="actionLoading()" class="rounded px-2.5 py-1 text-xs font-medium text-green-600 hover:bg-green-50 disabled:opacity-50">Mark validated</button>
+                }
+                <button (click)="createEvalCaseFromBacklog(item)" [disabled]="actionLoading()" class="rounded px-2.5 py-1 text-xs font-medium text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 disabled:opacity-50">+ Eval case</button>
+                <button (click)="selectBacklogItem(item)" class="rounded px-2.5 py-1 text-xs font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700">Details</button>
+              </div>
+            </div>
+
+            <!-- Expanded detail -->
+            @if (selectedBacklogItem()?.id === item.id) {
+              <div class="mt-4 border-t border-slate-100 pt-4 dark:border-slate-700">
+                <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Description</p>
+                <p class="mb-4 text-sm text-slate-600 dark:text-slate-400">{{ item.description }}</p>
+
+                @if (proposedChangeSummary(item)) {
+                  <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Proposed change</p>
+                  <div class="mb-4 flex items-start gap-2 rounded-lg bg-violet-50 p-3 dark:bg-violet-900/20">
+                    <p class="flex-1 text-sm text-violet-700 dark:text-violet-300">{{ proposedChangeSummary(item) }}</p>
+                    <a routerLink="/admin/prompts" class="shrink-0 text-xs text-violet-500 hover:underline">Open Prompts ↗</a>
+                  </div>
+                  <p class="mb-4 text-xs italic text-slate-400">Recommendations are suggestions only. Apply changes manually via the admin console.</p>
+                }
+
+                <div class="flex gap-2 text-xs text-slate-400">
+                  <span>Source: {{ item.sourceType }}</span>
+                  @if (item.sourceId) { <span>· ID: {{ item.sourceId.slice(0, 8) }}</span> }
+                  <span>· Created: {{ shortDate(item.createdAt) }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        } @empty {
+          <div class="py-12 text-center text-sm text-slate-400">No backlog items match the current filters.</div>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- ══════════════════════════════════════ AGENT REGRESSION ══════════════════════════════════════ -->
+  @if (!loading() && view() === 'regression') {
+    <section class="space-y-6">
+
+      <!-- Agent selector -->
+      <div class="flex flex-wrap gap-2">
+        @for (slug of agentSlugs; track slug) {
+          <button
+            (click)="loadRegression(slug)"
+            [class.bg-violet-600]="selectedRegressionAgent() === slug"
+            [class.text-white]="selectedRegressionAgent() === slug"
+            [class.bg-white]="selectedRegressionAgent() !== slug"
+            [class.text-slate-700]="selectedRegressionAgent() !== slug"
+            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-violet-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            {{ slug }}
+          </button>
+        }
+      </div>
+
+      @if (regressionSummary()) {
+        @let s = regressionSummary()!;
+
+        <!-- Score cards -->
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <p class="text-xs text-slate-500">Latest score</p>
+            <p class="mt-1 text-3xl font-bold text-slate-900 dark:text-white">{{ s.snapshot.latestScore != null ? (s.snapshot.latestScore | number:'1.0-0') + '%' : 'N/A' }}</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <p class="text-xs text-slate-500">Previous score</p>
+            <p class="mt-1 text-3xl font-bold text-slate-900 dark:text-white">{{ s.snapshot.previousScore != null ? (s.snapshot.previousScore | number:'1.0-0') + '%' : 'N/A' }}</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <p class="text-xs text-slate-500">Score delta</p>
+            <p class="mt-1 text-3xl font-bold" [class]="scoreDeltaClass(s.snapshot.scoreDelta)">
+              {{ s.snapshot.scoreDelta != null ? (s.snapshot.scoreDelta >= 0 ? '+' : '') + s.snapshot.scoreDelta : 'N/A' }}
+            </p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <p class="text-xs text-slate-500">Failed cases</p>
+            <p class="mt-1 text-3xl font-bold text-red-600">{{ s.snapshot.failedCases }}</p>
+          </div>
+        </div>
+
+        @if (s.message) {
+          <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+            {{ s.message }}
+          </div>
+        }
+
+        @if (s.comparison) {
+          @let c = s.comparison;
+          <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
+            <h2 class="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Comparison with previous run</h2>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Improved cases</p>
+                <p class="mt-1 text-sm text-green-600">{{ c.improvedCaseIds.length }} cases improved</p>
+              </div>
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Regressed cases</p>
+                <p class="mt-1 text-sm text-red-600">{{ c.regressedCaseIds.length }} cases regressed</p>
+              </div>
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Unresolved issues</p>
+                <p class="mt-1 text-sm text-orange-600">{{ c.unresolvedIssueCount }} cases still failing</p>
+              </div>
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Recommendation</p>
+                <p class="mt-1 text-sm text-slate-700 dark:text-slate-300">{{ c.recommendation }}</p>
+              </div>
+            </div>
+          </div>
+        }
+      } @else if (!loading()) {
+        <div class="py-12 text-center text-sm text-slate-400">Select an agent to view regression summary.</div>
+      }
+    </section>
+  }
+
+  <!-- ══════════════════════════════════════ IMPROVEMENT REPORT ══════════════════════════════════════ -->
+  @if (!loading() && view() === 'report') {
+    <section class="space-y-4">
+
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-300">Pilot Improvement Report</h2>
+        <div class="flex gap-2">
+          <button
+            (click)="loadReport()"
+            class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">
+            Refresh
+          </button>
+          <button
+            (click)="copyReport()"
+            [disabled]="!reportMarkdown()"
+            class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">
+            Copy
+          </button>
+          <button
+            (click)="downloadReport()"
+            [disabled]="!reportMarkdown()"
+            class="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50">
+            Download .md
+          </button>
+        </div>
+      </div>
+
+      @if (reportMarkdown()) {
+        <pre class="max-h-[70vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-5 text-xs leading-relaxed text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 whitespace-pre-wrap">{{ reportMarkdown() }}</pre>
+      } @else {
+        <div class="py-12 text-center text-sm text-slate-400">No report loaded. Click Refresh to generate.</div>
+      }
+    </section>
+  }
+
+</div>
