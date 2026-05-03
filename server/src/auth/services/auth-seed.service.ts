@@ -71,6 +71,10 @@ export class AuthSeedService implements OnModuleInit {
 	}
 
 	private async seedDefaultAdmin(): Promise<void> {
+		if (!this.cfg.isDevelopment && !this.cfg.seedDefaultAdmin) {
+			this.log.log('Skipping default admin seed (set SEED_DEFAULT_ADMIN=true to enable in production).');
+			return;
+		}
 		const email = this.cfg.defaultAdminEmail.toLowerCase();
 		const existing = await this.users.findByEmail(email);
 		if (existing) return;

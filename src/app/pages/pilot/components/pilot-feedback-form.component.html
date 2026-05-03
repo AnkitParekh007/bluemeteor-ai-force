@@ -1,0 +1,153 @@
+<form class="flex max-w-xl flex-col gap-4" (ngSubmit)="submit()">
+	@if (success()) {
+		<p
+			class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100"
+			role="status"
+		>
+			Thanks — your pilot feedback was saved.
+		</p>
+	}
+	@if (error(); as err) {
+		<p
+			class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-100"
+			role="alert"
+		>
+			{{ err }}
+		</p>
+	}
+
+	<label class="flex flex-col gap-1 text-sm">
+		<span class="font-semibold text-slate-800 dark:text-slate-200">Your role</span>
+		<select
+			class="rounded-lg border border-violet-200 bg-white px-3 py-2 dark:border-indigo-800 dark:bg-slate-900"
+			[ngModel]="userRole()"
+			(ngModelChange)="userRole.set($event)"
+			name="userRole"
+		>
+			@for (r of roles; track r) {
+				<option [ngValue]="r">{{ r }}</option>
+			}
+		</select>
+	</label>
+
+	<label class="flex flex-col gap-1 text-sm">
+		<span class="font-semibold text-slate-800 dark:text-slate-200">Agent</span>
+		<select
+			class="rounded-lg border border-violet-200 bg-white px-3 py-2 dark:border-indigo-800 dark:bg-slate-900"
+			[ngModel]="agentSlug()"
+			(ngModelChange)="agentSlug.set($event)"
+			name="agentSlug"
+			required
+		>
+			<option value="">Select…</option>
+			@for (s of agentSlugs; track s) {
+				<option [value]="s">{{ s }}</option>
+			}
+		</select>
+	</label>
+
+	<label class="flex flex-col gap-1 text-sm">
+		<span class="font-semibold text-slate-800 dark:text-slate-200">Task type</span>
+		<input
+			class="rounded-lg border border-violet-200 bg-white px-3 py-2 dark:border-indigo-800 dark:bg-slate-900"
+			[ngModel]="taskType()"
+			(ngModelChange)="taskType.set($event)"
+			name="taskType"
+			required
+			placeholder="e.g. regression_test_plan"
+		/>
+	</label>
+
+	<label class="flex flex-col gap-1 text-sm">
+		<span class="font-semibold text-slate-800 dark:text-slate-200">Rating (1–5)</span>
+		<input
+			type="number"
+			min="1"
+			max="5"
+			class="rounded-lg border border-violet-200 bg-white px-3 py-2 dark:border-indigo-800 dark:bg-slate-900"
+			[ngModel]="rating()"
+			(ngModelChange)="rating.set(+$event)"
+			name="rating"
+		/>
+	</label>
+
+	<label class="flex flex-col gap-1 text-sm">
+		<span class="font-semibold text-slate-800 dark:text-slate-200">What worked?</span>
+		<textarea
+			rows="3"
+			class="rounded-lg border border-violet-200 bg-white px-3 py-2 dark:border-indigo-800 dark:bg-slate-900"
+			[ngModel]="whatWorked()"
+			(ngModelChange)="whatWorked.set($event)"
+			name="whatWorked"
+			required
+		></textarea>
+	</label>
+
+	<label class="flex flex-col gap-1 text-sm">
+		<span class="font-semibold text-slate-800 dark:text-slate-200">What failed or was weak?</span>
+		<textarea
+			rows="3"
+			class="rounded-lg border border-violet-200 bg-white px-3 py-2 dark:border-indigo-800 dark:bg-slate-900"
+			[ngModel]="whatFailed()"
+			(ngModelChange)="whatFailed.set($event)"
+			name="whatFailed"
+			placeholder="Leave blank if nothing — we will store “Nothing significant.”"
+		></textarea>
+	</label>
+
+	<label class="flex flex-col gap-1 text-sm">
+		<span class="font-semibold text-slate-800 dark:text-slate-200">Estimated time saved (minutes)</span>
+		<input
+			type="number"
+			min="0"
+			class="rounded-lg border border-violet-200 bg-white px-3 py-2 dark:border-indigo-800 dark:bg-slate-900"
+			[ngModel]="timeSavedMinutes()"
+			(ngModelChange)="timeSavedMinutes.set($event === '' || $event == null ? null : +$event)"
+			name="timeSaved"
+		/>
+	</label>
+
+	<label class="flex items-center gap-2 text-sm">
+		<input
+			type="checkbox"
+			[ngModel]="wouldUseAgain()"
+			(ngModelChange)="wouldUseAgain.set($event)"
+			name="again"
+		/>
+		<span class="font-semibold text-slate-800 dark:text-slate-200">Would use again</span>
+	</label>
+
+	<label class="flex flex-col gap-1 text-sm">
+		<span class="font-semibold text-slate-800 dark:text-slate-200">Notes (optional)</span>
+		<textarea
+			rows="2"
+			class="rounded-lg border border-violet-200 bg-white px-3 py-2 dark:border-indigo-800 dark:bg-slate-900"
+			[ngModel]="notes()"
+			(ngModelChange)="notes.set($event)"
+			name="notes"
+		></textarea>
+	</label>
+
+	@if (sessionId() || runId() || traceId()) {
+		<p class="text-xs text-slate-500">
+			Context:
+			@if (sessionId(); as sid) {
+				<span class="ml-1 font-mono">session {{ sid }}</span>
+			}
+			@if (runId(); as rid) {
+				<span class="ml-1 font-mono">run {{ rid }}</span>
+			}
+			@if (traceId(); as tid) {
+				<span class="ml-1 font-mono">trace {{ tid }}</span>
+			}
+		</p>
+	}
+
+	<button
+		type="submit"
+		[disabled]="submitting()"
+		class="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-50"
+	>
+		{{ submitting() ? 'Submitting…' : 'Submit feedback' }}
+	</button>
+</form>

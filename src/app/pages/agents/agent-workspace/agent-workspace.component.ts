@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { quickChipsForSlug } from '../../../core/data/agent-quick-chips';
+import { pilotSamplePromptsForAgentSlug } from '../../../core/data/pilot-sample-prompts';
 import { internalAgentConfig } from '../../../core/data/internal-agent-configs';
 import { MOCK_AGENTS } from '../../../core/data/mock-agents';
 import type { AgentApprovalRequest } from '../../../core/models/agent-runtime.models';
@@ -123,6 +124,13 @@ export class AgentWorkspaceComponent {
 
 	readonly mobileSessionsOpen = signal(false);
 	readonly mobileToolsOpen = signal(false);
+	readonly pilotSamplesOpen = signal(false);
+	readonly composerDraftInject = signal<{ readonly version: number; readonly text: string } | null>(null);
+
+	readonly pilotSampleList = computed(() => {
+		const s = this.slug();
+		return s ? [...pilotSamplePromptsForAgentSlug(s)] : [];
+	});
 
 	constructor() {
 		effect(() => {
@@ -177,4 +185,20 @@ export class AgentWorkspaceComponent {
 	}
 
 	protected readonly env = environment;
+
+	protected insertPilotSample(text: string): void {
+		this.composerDraftInject.set({ version: Date.now(), text });
+		this.pilotSamplesOpen.set(false);
+	}
+
+	protected pilotFeedbackQueryParams(): Record<string, string> {
+		const s = this.slug() ?? '';
+		const q: Record<string, string> = { agentSlug: s };
+		const sid = this.store.activeSessionId();
+		const run = this.store.activeRun();
+		if (sid) q['sessionId'] = sid;
+		if (run?.id) q['runId'] = run.id;
+		if (run?.traceId) q['traceId'] = run.traceId;
+		return q;
+	}
 }

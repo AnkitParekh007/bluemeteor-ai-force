@@ -1,0 +1,98 @@
+<section class="space-y-8 text-slate-800 dark:text-slate-100">
+	<div class="rounded-2xl border border-violet-200/70 bg-white/90 p-6 shadow-sm dark:border-indigo-800/70 dark:bg-slate-900/80">
+		<h2 class="text-lg font-semibold text-slate-900 dark:text-white">Welcome to Bluemeteor AI Force</h2>
+		<p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+			This workspace gives your team governed access to specialized internal agents: chat, artifacts, browser and
+			tests where enabled, approvals for risky steps, and full auditability. The pilot is a controlled rollout to
+			prove value, safety, and readiness before wider adoption.
+		</p>
+	</div>
+
+	<div class="rounded-2xl border border-violet-200/70 bg-white/90 p-6 shadow-sm dark:border-indigo-800/70 dark:bg-slate-900/80">
+		<h2 class="text-lg font-semibold text-slate-900 dark:text-white">Pilot goals</h2>
+		<ul class="mt-2 list-inside list-disc space-y-1 text-sm text-slate-600 dark:text-slate-400">
+			<li>Validate real workflows per role (engineering, QA, PM, docs, data, support, DevOps).</li>
+			<li>Measure usefulness, time saved, and friction via structured feedback.</li>
+			<li>Confirm readiness signals (health, RBAC, evaluations, ops visibility) stay green.</li>
+			<li>Decide expand, fix, or pause using exit criteria in the success metrics doc.</li>
+		</ul>
+	</div>
+
+	<div class="rounded-2xl border border-violet-200/70 bg-white/90 p-6 shadow-sm dark:border-indigo-800/70 dark:bg-slate-900/80">
+		<h2 class="text-lg font-semibold text-slate-900 dark:text-white">Available agents (priority)</h2>
+		<p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+			Fronto, Backo, Testo, Producto, Doco, Dato, Supporto, DevOpsy — each has a short guide with sample prompts on
+			the Agent guides page.
+		</p>
+	</div>
+
+	<div class="rounded-2xl border border-violet-200/70 bg-white/90 p-6 shadow-sm dark:border-indigo-800/70 dark:bg-slate-900/80">
+		<h2 class="text-lg font-semibold text-slate-900 dark:text-white">Safe usage rules</h2>
+		<ul class="mt-2 list-inside list-disc space-y-1 text-sm text-slate-600 dark:text-slate-400">
+			<li>No secrets or production credentials in prompts.</li>
+			<li>Review every artifact before merge or customer send.</li>
+			<li>Use approvals and internal policies for anything that could change systems or data.</li>
+			<li>Prefer local/staging targets for browser and tests unless explicitly approved.</li>
+		</ul>
+	</div>
+
+	<div class="rounded-2xl border border-violet-200/70 bg-white/90 p-6 shadow-sm dark:border-indigo-800/70 dark:bg-slate-900/80">
+		<h2 class="text-lg font-semibold text-slate-900 dark:text-white">How to start</h2>
+		<ol class="mt-2 list-inside list-decimal space-y-1 text-sm text-slate-600 dark:text-slate-400">
+			<li>Complete onboarding for your role.</li>
+			<li>Open your primary agent and run one sample prompt.</li>
+			<li>Review outputs and submit feedback so we can improve.</li>
+		</ol>
+	</div>
+
+	<div class="rounded-2xl border border-violet-200/70 bg-white/90 p-6 shadow-sm dark:border-indigo-800/70 dark:bg-slate-900/80">
+		<h2 class="text-lg font-semibold text-slate-900 dark:text-white">How feedback will be used</h2>
+		<p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+			Feedback is stored internally, aggregated on the Metrics page (admins), and summarized in pilot reports. It
+			drives prompt, workflow, and readiness improvements — not individual performance reviews.
+		</p>
+	</div>
+
+	<div class="rounded-2xl border border-violet-200/70 bg-white/90 p-6 shadow-sm dark:border-indigo-800/70 dark:bg-slate-900/80">
+		<h2 class="text-lg font-semibold text-slate-900 dark:text-white">Support process</h2>
+		<p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+			Use the Support page for escalation templates and what to attach (agent, prompt, run ID, trace ID). Critical
+			security issues should be reported immediately to your admin contact.
+		</p>
+	</div>
+
+	<div class="rounded-2xl border border-violet-200/70 bg-white/90 p-6 shadow-sm dark:border-indigo-800/70 dark:bg-slate-900/80">
+		<h2 class="text-lg font-semibold text-slate-900 dark:text-white">Pilot timeline & success criteria</h2>
+		<p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+			Follow your team’s dated plan in <code class="rounded bg-slate-100 px-1 dark:bg-slate-800">docs/internal-pilot-launch-plan.md</code>.
+			Success criteria and exit gates are defined in <code class="rounded bg-slate-100 px-1 dark:bg-slate-800">docs/pilot-success-metrics.md</code>.
+		</p>
+	</div>
+
+	<div class="flex flex-wrap gap-3">
+		<a
+			routerLink="/pilot/onboarding"
+			class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md"
+		>
+			Start onboarding
+		</a>
+		<a
+			routerLink="/pilot/agents"
+			class="inline-flex items-center gap-2 rounded-xl border border-violet-300 px-4 py-2.5 text-sm font-semibold text-slate-800 dark:border-indigo-600 dark:text-slate-100"
+		>
+			View agent guides
+		</a>
+		<a
+			routerLink="/pilot/feedback"
+			class="inline-flex items-center gap-2 rounded-xl border border-violet-300 px-4 py-2.5 text-sm font-semibold text-slate-800 dark:border-indigo-600 dark:text-slate-100"
+		>
+			Submit feedback
+		</a>
+		<a
+			routerLink="/agents"
+			class="inline-flex items-center gap-2 rounded-xl border border-violet-300 px-4 py-2.5 text-sm font-semibold text-slate-800 dark:border-indigo-600 dark:text-slate-100"
+		>
+			Open Agents
+		</a>
+	</div>
+</section>

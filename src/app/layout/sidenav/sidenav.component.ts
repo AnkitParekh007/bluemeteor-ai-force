@@ -27,6 +27,12 @@ export class SidenavComponent {
         icon: 'pi pi-chart-bar',
         linkExact: true,
       },
+      {
+        label: 'Pilot',
+        route: ['/pilot'],
+        icon: 'pi pi-flag',
+        linkExact: false,
+      },
     ];
     if (this.auth.hasPermission('agents.view')) {
       base.push({
@@ -44,11 +50,31 @@ export class SidenavComponent {
         linkExact: false,
       });
     }
-    if (this.auth.hasPermission('users.view')) {
+    if (
+      this.auth.hasAnyPermission(
+        'system.admin',
+        'system.debug.view',
+        'agents.manage',
+        'users.view',
+        'audit.view',
+        'tools.view',
+        'tools.approve',
+        'agents.readiness.view',
+        'tools.manage',
+      )
+    ) {
       base.push({
-        label: 'Users',
-        route: ['/admin', 'users'],
-        icon: 'pi pi-id-card',
+        label: 'Admin',
+        route: ['/admin', 'overview'],
+        icon: 'pi pi-shield',
+        linkExact: false,
+      });
+    }
+    if (this.auth.hasPermission('system.debug.view')) {
+      base.push({
+        label: 'Ops',
+        route: ['/ops'],
+        icon: 'pi pi-server',
         linkExact: true,
       });
     }
@@ -65,6 +91,12 @@ export class SidenavComponent {
         label: 'Readiness',
         route: ['/agent-readiness'],
         icon: 'pi pi-check-circle',
+        linkExact: true,
+      });
+      base.push({
+        label: 'Agent intelligence',
+        route: ['/agent-intelligence'],
+        icon: 'pi pi-database',
         linkExact: true,
       });
     }

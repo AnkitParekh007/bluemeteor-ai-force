@@ -1,0 +1,71 @@
+<div class="mx-auto max-w-6xl space-y-4">
+	<p-confirmDialog />
+	<app-admin-section-header
+		title="Evaluations"
+		subtitle="Run harness cases per agent. Prefer mock / default safe options unless you explicitly enable real provider."
+	/>
+
+	<div class="flex flex-wrap items-center gap-3 text-sm">
+		<label class="flex items-center gap-2">
+			Agent
+			<select class="rounded border px-2 py-1 dark:bg-slate-900" [(ngModel)]="agentSlug" (ngModelChange)="load()">
+				@for (s of slugs; track s) {
+					<option [value]="s">{{ s }}</option>
+				}
+			</select>
+		</label>
+		<label class="flex items-center gap-2 text-xs">
+			<input type="checkbox" [(ngModel)]="useRealProvider" />
+			Use real provider (warned)
+		</label>
+		<p-button label="Run all cases" size="small" (onClick)="runAll()" />
+	</div>
+
+	<div class="grid gap-4 md:grid-cols-2">
+		<div>
+			<div class="text-xs font-semibold text-slate-500">Cases</div>
+			<div class="mt-1 max-h-64 overflow-auto rounded border dark:border-slate-700">
+				<table class="w-full text-left text-[11px]">
+					@for (c of cases(); track c.id) {
+						<tr class="border-b border-slate-100 dark:border-slate-800">
+							<td class="px-2 py-1">{{ c.name }}</td>
+							<td class="px-2 py-1">{{ c.priority }}</td>
+							<td class="px-2 py-1 text-right">
+								<p-button label="Run" size="small" [outlined]="true" (onClick)="runCase(c.id)" />
+							</td>
+						</tr>
+					}
+				</table>
+			</div>
+		</div>
+		<div>
+			<div class="text-xs font-semibold text-slate-500">Recent runs</div>
+			<div class="mt-1 max-h-64 overflow-auto rounded border dark:border-slate-700">
+				<table class="w-full text-left text-[11px]">
+					@for (r of runs(); track r.id) {
+						<tr
+							class="cursor-pointer border-b border-slate-100 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
+							(click)="openRun(r)"
+						>
+							<td class="px-2 py-1 font-mono">{{ r.id }}</td>
+							<td class="px-2 py-1">{{ r.status }}</td>
+							<td class="px-2 py-1">{{ r.score }}</td>
+						</tr>
+					}
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<p-dialog
+		[visible]="selectedRun() !== null"
+		(visibleChange)="!$event && selectedRun.set(null)"
+		[modal]="true"
+		[style]="{ width: 'min(800px, 95vw)' }"
+		header="Evaluation run"
+	>
+		@if (selectedRun(); as run) {
+			<pre class="max-h-[70vh] overflow-auto text-xs">{{ run | json }}</pre>
+		}
+	</p-dialog>
+</div>

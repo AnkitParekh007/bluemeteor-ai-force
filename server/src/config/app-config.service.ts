@@ -7,6 +7,95 @@ import { ConfigService } from '@nestjs/config';
 export class AppConfigService {
 	constructor(private readonly config: ConfigService) {}
 
+	// ——— Deployment / database ———
+
+	get databaseProvider(): 'sqlite' | 'postgresql' {
+		const v = (this.config.get<string>('DATABASE_PROVIDER') ?? 'sqlite').toLowerCase();
+		return v === 'postgresql' || v === 'postgres' ? 'postgresql' : 'sqlite';
+	}
+
+	/** Raw URL from env — never log. */
+	get databaseUrl(): string {
+		return (this.config.get<string>('DATABASE_URL') ?? 'file:./dev.db').trim();
+	}
+
+	get postgresHost(): string {
+		return (this.config.get<string>('POSTGRES_HOST') ?? 'localhost').trim();
+	}
+
+	get postgresPort(): number {
+		return Number(this.config.get<string>('POSTGRES_PORT') ?? 5432);
+	}
+
+	get postgresDb(): string {
+		return (this.config.get<string>('POSTGRES_DB') ?? 'bluemeteor_ai_force').trim();
+	}
+
+	get postgresUser(): string {
+		return (this.config.get<string>('POSTGRES_USER') ?? 'bluemeteor').trim();
+	}
+
+	get postgresPassword(): string {
+		return (this.config.get<string>('POSTGRES_PASSWORD') ?? '').trim();
+	}
+
+	get postgresSsl(): boolean {
+		return this.config.get<string>('POSTGRES_SSL') === 'true';
+	}
+
+	get prismaLogQueries(): boolean {
+		return this.config.get<string>('PRISMA_LOG_QUERIES') === 'true';
+	}
+
+	get databaseConnectionTimeoutMs(): number {
+		return Number(this.config.get<string>('DATABASE_CONNECTION_TIMEOUT_MS') ?? 10_000);
+	}
+
+	get allowSqliteInProduction(): boolean {
+		return this.config.get<string>('ALLOW_SQLITE_IN_PRODUCTION') === 'true';
+	}
+
+	/** Root directory for runtime files (relative to cwd unless absolute). */
+	get storageRoot(): string {
+		return (this.config.get<string>('STORAGE_ROOT') ?? 'storage').trim() || 'storage';
+	}
+
+	storageRootAbs(): string {
+		const r = this.storageRoot;
+		return path.isAbsolute(r) ? r : path.resolve(process.cwd(), r);
+	}
+
+	/**
+	 * Resolve a storage path from env (e.g. BROWSER_SCREENSHOT_DIR).
+	 * Strips a leading `storage/` so values stay under STORAGE_ROOT.
+	 */
+	resolveStoragePath(configKey: string, defaultRelative: string): string {
+		const raw = (this.config.get<string>(configKey) ?? defaultRelative).trim() || defaultRelative;
+		if (path.isAbsolute(raw)) return raw;
+		const stripped = raw.replace(/^\/?storage\/?/i, '').replace(/^[/\\]+/, '');
+		return path.join(this.storageRootAbs(), stripped);
+	}
+
+	get apiGlobalPrefix(): string {
+		return (this.config.get<string>('API_GLOBAL_PREFIX') ?? '').trim().replace(/^\/+|\/+$/g, '');
+	}
+
+	get enableMetrics(): boolean {
+		return this.config.get<string>('ENABLE_METRICS') !== 'false';
+	}
+
+	get metricsPublic(): boolean {
+		return this.config.get<string>('METRICS_PUBLIC') === 'true';
+	}
+
+	get appVersion(): string {
+		return (this.config.get<string>('APP_VERSION') ?? '0.0.1').trim();
+	}
+
+	get structuredLogging(): boolean {
+		return this.config.get<string>('STRUCTURED_LOGGING') === 'true' || !this.isDevelopment;
+	}
+
 	// ——— Internal read-only tool hub ———
 
 	get enableInternalTools(): boolean {
@@ -443,7 +532,7 @@ export class AppConfigService {
 	}
 
 	get browserScreenshotDir(): string {
-		return this.config.get<string>('BROWSER_SCREENSHOT_DIR') ?? 'storage/browser-screenshots';
+		return this.resolveStoragePath('BROWSER_SCREENSHOT_DIR', 'browser-screenshots');
 	}
 
 	/** Authenticated browser profiles (storage state on disk). Default off. */
@@ -452,11 +541,11 @@ export class AppConfigService {
 	}
 
 	get browserAuthStateDir(): string {
-		return this.config.get<string>('BROWSER_AUTH_STATE_DIR') ?? 'storage/browser-auth-states';
+		return this.resolveStoragePath('BROWSER_AUTH_STATE_DIR', 'browser-auth-states');
 	}
 
 	get browserSessionProfileDir(): string {
-		return this.config.get<string>('BROWSER_SESSION_PROFILE_DIR') ?? 'storage/browser-profiles';
+		return this.resolveStoragePath('BROWSER_SESSION_PROFILE_DIR', 'browser-profiles');
 	}
 
 	get browserRecordVideo(): boolean {
@@ -464,7 +553,7 @@ export class AppConfigService {
 	}
 
 	get browserVideoDir(): string {
-		return this.config.get<string>('BROWSER_VIDEO_DIR') ?? 'storage/browser-videos';
+		return this.resolveStoragePath('BROWSER_VIDEO_DIR', 'browser-videos');
 	}
 
 	get browserTraceEnabled(): boolean {
@@ -472,7 +561,7 @@ export class AppConfigService {
 	}
 
 	get browserTraceDir(): string {
-		return this.config.get<string>('BROWSER_TRACE_DIR') ?? 'storage/browser-traces';
+		return this.resolveStoragePath('BROWSER_TRACE_DIR', 'browser-traces');
 	}
 
 	get testTargetBaseUrl(): string {
@@ -512,11 +601,11 @@ export class AppConfigService {
 	}
 
 	get playwrightTestOutputDir(): string {
-		return this.config.get<string>('PLAYWRIGHT_TEST_OUTPUT_DIR') ?? 'storage/playwright-results';
+		return this.resolveStoragePath('PLAYWRIGHT_TEST_OUTPUT_DIR', 'playwright-results');
 	}
 
 	get playwrightGeneratedSpecDir(): string {
-		return this.config.get<string>('PLAYWRIGHT_GENERATED_SPEC_DIR') ?? 'storage/generated-tests';
+		return this.resolveStoragePath('PLAYWRIGHT_GENERATED_SPEC_DIR', 'generated-tests');
 	}
 
 	get playwrightMaxTestDurationMs(): number {
@@ -637,6 +726,42 @@ export class AppConfigService {
 		return this.config.get<string>('JWT_REFRESH_EXPIRES_IN') ?? '7d';
 	}
 
+	/** Dedicated secret for short-lived SSE stream tokens (not the access JWT secret). */
+	get streamTokenSecret(): string {
+		const s = this.config.get<string>('STREAM_TOKEN_SECRET');
+		if (s != null && s.trim() !== '') return s.trim();
+		if (this.isDevelopment) return `${this.jwtAccessSecret}:stream`;
+		return '';
+	}
+
+	get streamTokenTtlSeconds(): number {
+		return Number(this.config.get<string>('STREAM_TOKEN_TTL_SECONDS') ?? 300);
+	}
+
+	get enableDirectBrowserDebugEndpoints(): boolean {
+		return this.config.get<string>('ENABLE_DIRECT_BROWSER_DEBUG_ENDPOINTS') === 'true';
+	}
+
+	get seedDefaultAdmin(): boolean {
+		return this.config.get<string>('SEED_DEFAULT_ADMIN') === 'true';
+	}
+
+	get allowMockFallbackInProduction(): boolean {
+		return this.config.get<string>('ALLOW_MOCK_FALLBACK_IN_PRODUCTION') === 'true';
+	}
+
+	get browserAssetRetentionDays(): number {
+		return Number(this.config.get<string>('BROWSER_ASSET_RETENTION_DAYS') ?? 7);
+	}
+
+	get testAssetRetentionDays(): number {
+		return Number(this.config.get<string>('TEST_ASSET_RETENTION_DAYS') ?? 7);
+	}
+
+	get enableStorageCleanup(): boolean {
+		return this.config.get<string>('ENABLE_STORAGE_CLEANUP') !== 'false';
+	}
+
 	get authDemoUsersEnabled(): boolean {
 		return this.config.get<string>('AUTH_DEMO_USERS_ENABLED') !== 'false';
 	}
@@ -690,21 +815,65 @@ export class AppConfigService {
 	 * Call from bootstrap before listen().
 	 */
 	validateAuthSecretsForProduction(): void {
-		if (!this.isDevelopment) {
-			const weak = new Set([
-				'',
-				'change-me-access-secret',
-				'change-me-refresh-secret',
-				'changeme',
-				'secret',
-			]);
-			const a = this.jwtAccessSecret.trim();
-			const r = this.jwtRefreshSecret.trim();
-			if (!a || !r || weak.has(a) || weak.has(r) || a === r) {
-				throw new Error(
-					'Production requires strong JWT_ACCESS_SECRET and JWT_REFRESH_SECRET (distinct, non-default values).',
-				);
-			}
+		if (this.isDevelopment) return;
+
+		const weak = new Set([
+			'',
+			'change-me-access-secret',
+			'change-me-refresh-secret',
+			'change-me-stream-secret',
+			'changeme',
+			'secret',
+			'admin123',
+		]);
+
+		const a = this.jwtAccessSecret.trim();
+		const r = this.jwtRefreshSecret.trim();
+		if (!a || !r || weak.has(a) || weak.has(r) || a === r || a.length < 32 || r.length < 32) {
+			throw new Error(
+				'Production requires strong JWT_ACCESS_SECRET and JWT_REFRESH_SECRET (distinct, ≥32 chars, non-default).',
+			);
+		}
+
+		const st = this.streamTokenSecret.trim();
+		if (
+			!st ||
+			weak.has(st) ||
+			st === a ||
+			st === r ||
+			st.endsWith(':stream') ||
+			st.length < 32
+		) {
+			throw new Error(
+				'Production requires STREAM_TOKEN_SECRET (dedicated, ≥32 chars, not default or dev-suffix).',
+			);
+		}
+
+		if (this.defaultAdminPassword.toLowerCase() === 'admin123' || weak.has(this.defaultAdminPassword)) {
+			throw new Error('Production requires DEFAULT_ADMIN_PASSWORD to be strong (not admin123 or placeholders).');
+		}
+
+		if (this.authDemoUsersEnabled) {
+			throw new Error('Production requires AUTH_DEMO_USERS_ENABLED=false.');
+		}
+
+		if (this.mcpUseMockClientOnFailure) {
+			throw new Error('Production requires MCP_USE_MOCK_CLIENT_ON_FAILURE=false.');
+		}
+
+		if (this.enableDirectBrowserDebugEndpoints) {
+			throw new Error('Production requires ENABLE_DIRECT_BROWSER_DEBUG_ENDPOINTS=false.');
+		}
+
+		if (this.enableConnectorMockFallback && !this.allowMockFallbackInProduction) {
+			throw new Error(
+				'Production requires ENABLE_CONNECTOR_MOCK_FALLBACK=false unless ALLOW_MOCK_FALLBACK_IN_PRODUCTION=true.',
+			);
+		}
+
+		const cors = this.corsOrigin.split(',').map((s) => s.trim());
+		if (cors.includes('*')) {
+			throw new Error('Production CORS_ORIGIN must not be "*".');
 		}
 	}
 }

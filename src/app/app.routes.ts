@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 
 import { agentFeatureRoutes } from './pages/agents/agents.routes';
+import { adminShellRoute } from './pages/admin/admin.routes';
+import { pilotChildRoutes } from './pages/pilot/pilot.routes';
 import { authGuard, loginRedirectGuard } from './core/guards/auth.guard';
 import { permissionGuard } from './core/guards/permission.guard';
 
@@ -84,22 +86,24 @@ export const routes: Routes = [
 		],
 	},
 	{
-		path: 'admin',
-		canActivate: [authGuard, permissionGuard('users.view')],
+		path: 'pilot',
+		canActivate: [authGuard],
 		loadComponent: () =>
 			import('./pages/shell/dashboard-layout.component').then(
 				(m) => m.DashboardLayoutComponent,
 			),
 		children: [
 			{
-				path: 'users',
+				path: '',
 				loadComponent: () =>
-					import('./pages/admin/admin-users-page.component').then(
-						(m) => m.AdminUsersPageComponent,
+					import('./pages/pilot/pilot-shell/pilot-shell.component').then(
+						(m) => m.PilotShellComponent,
 					),
+				children: pilotChildRoutes,
 			},
 		],
 	},
+	adminShellRoute,
 	{
 		path: 'agent-runtime-debug',
 		canActivate: [authGuard, permissionGuard('agents.runtime_debug.view')],
@@ -188,6 +192,47 @@ export const routes: Routes = [
 				loadComponent: () =>
 					import('./pages/agent-readiness/agent-readiness.component').then(
 						(m) => m.AgentReadinessComponent,
+					),
+			},
+		],
+	},
+	{
+		path: 'security-debug',
+		canActivate: [authGuard, permissionGuard('system.debug.view')],
+		loadComponent: () =>
+			import('./pages/shell/dashboard-layout.component').then((m) => m.DashboardLayoutComponent),
+		children: [
+			{
+				path: '',
+				loadComponent: () =>
+					import('./pages/security-debug/security-debug.component').then((m) => m.SecurityDebugComponent),
+			},
+		],
+	},
+	{
+		path: 'ops',
+		canActivate: [authGuard, permissionGuard('system.debug.view')],
+		loadComponent: () =>
+			import('./pages/shell/dashboard-layout.component').then((m) => m.DashboardLayoutComponent),
+		children: [
+			{
+				path: '',
+				loadComponent: () =>
+					import('./pages/ops/ops-dashboard.component').then((m) => m.OpsDashboardComponent),
+			},
+		],
+	},
+	{
+		path: 'agent-intelligence',
+		canActivate: [authGuard, permissionGuard('agents.readiness.view')],
+		loadComponent: () =>
+			import('./pages/shell/dashboard-layout.component').then((m) => m.DashboardLayoutComponent),
+		children: [
+			{
+				path: '',
+				loadComponent: () =>
+					import('./pages/agent-intelligence/agent-intelligence-page.component').then(
+						(m) => m.AgentIntelligencePageComponent,
 					),
 			},
 		],

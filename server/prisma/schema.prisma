@@ -52,6 +52,8 @@ model AgentRun {
   error         String?
   actorUserId   String?
   actorEmail    String?
+  /// Correlates logs, provider calls, and support tickets for a run (not a distributed trace span ID).
+  traceId       String?
   createdAt     DateTime
   updatedAt     DateTime
   completedAt   DateTime?
@@ -64,6 +66,7 @@ model AgentRun {
   @@index([agentSlug])
   @@index([createdAt])
   @@index([actorUserId])
+  @@index([traceId])
   @@map("agent_runs")
 }
 
@@ -660,10 +663,39 @@ model User {
   teamMembers     TeamMember[]
   refreshTokens   RefreshToken[]
   userAgentAccess UserAgentAccess[]
+  pilotFeedback   PilotFeedback[]
 
   @@index([email])
   @@index([status])
   @@map("users")
+}
+
+model PilotFeedback {
+  id               String   @id
+  userId           String?
+  userEmail        String?
+  userRole         String
+  agentSlug        String
+  rating           Int
+  taskType         String
+  whatWorked       String
+  whatFailed       String
+  timeSavedMinutes Int?
+  wouldUseAgain    Boolean
+  notes            String?
+  sessionId        String?
+  runId            String?
+  traceId          String?
+  createdAt        DateTime
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([agentSlug])
+  @@index([userRole])
+  @@index([rating])
+  @@index([createdAt])
+  @@map("pilot_feedback")
 }
 
 model Role {

@@ -1,0 +1,71 @@
+<div class="mx-auto max-w-6xl space-y-8 p-4 text-slate-800 dark:text-slate-100">
+	<div class="flex flex-wrap items-end justify-between gap-4">
+		<div>
+			<h1 class="text-xl font-semibold">Agent intelligence</h1>
+			<p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+				Prompt registry, skill packs, workflows, and evaluation harness.
+			</p>
+		</div>
+		<label class="flex flex-col gap-1 text-sm">
+			<span class="font-medium text-slate-600 dark:text-slate-400">Agent</span>
+			<select
+				class="rounded-lg border border-violet-200 bg-white px-3 py-2 dark:border-indigo-800 dark:bg-slate-900"
+				[value]="selectedSlug()"
+				(change)="onSlugChange($event)"
+			>
+				@for (s of slugs; track s) {
+					<option [value]="s">{{ s }}</option>
+				}
+			</select>
+		</label>
+	</div>
+
+	@if (loading()) {
+		<p class="text-sm text-slate-500">Loading…</p>
+	}
+	@if (error(); as err) {
+		<p class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-100">
+			{{ err }}
+		</p>
+	}
+
+	<section class="space-y-3">
+		<h2 class="text-lg font-medium">Prompt templates</h2>
+		@if (activeSystemPrompt(); as t) {
+			<app-prompt-preview [template]="t" [variables]="previewVariables()" />
+		} @else {
+			<p class="text-sm text-slate-500">No active system template (orchestrator falls back to static config).</p>
+		}
+		<button
+			type="button"
+			class="text-sm font-medium text-violet-700 underline dark:text-violet-300"
+			(click)="refreshPreviewVars()"
+		>
+			Refresh preview variables from agent slug
+		</button>
+	</section>
+
+	<section class="space-y-3">
+		<h2 class="text-lg font-medium">Skill packs</h2>
+		<app-skill-pack-list [packs]="packs()" [agentSlug]="selectedSlug()" />
+	</section>
+
+	<section class="space-y-3">
+		<h2 class="text-lg font-medium">Workflow templates</h2>
+		<div class="grid gap-4 md:grid-cols-2">
+			@for (w of workflows(); track w.id) {
+				<app-workflow-template-viewer [workflow]="w" />
+			}
+		</div>
+	</section>
+
+	<section class="space-y-3">
+		<h2 class="text-lg font-medium">Evaluations</h2>
+		<app-evaluation-dashboard
+			[cases]="evalCases()"
+			[runs]="runs()"
+			[agentSlug]="selectedSlug()"
+			(runFinished)="onRunFinished($event)"
+		/>
+	</section>
+</div>

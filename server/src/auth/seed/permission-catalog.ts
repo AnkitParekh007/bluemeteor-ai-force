@@ -40,6 +40,7 @@ export const PERMISSION_CATALOG: ReadonlyArray<{ key: string; name: string; cate
 export const ROLE_PERMISSION_MAP: Readonly<Record<string, readonly string[]>> = {
 	admin: PERMISSION_CATALOG.map((p) => p.key),
 	engineering_lead: [
+		'system.debug.view',
 		'agents.view',
 		'agents.use',
 		'agents.act',

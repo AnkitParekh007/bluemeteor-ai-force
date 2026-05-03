@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, Optional, forwardRef } from '@nestjs/common';
 
 import { AppConfigService } from '../../config/app-config.service';
 import { RagContextBuilderService } from '../../rag/services/rag-context-builder.service';
@@ -26,6 +26,10 @@ import { AgentContextBuilderService } from './agent-context-builder.service';
 import { AgentEventBusService } from './agent-event-bus.service';
 import { AgentRunService } from './agent-run.service';
 import { AgentSessionService } from './agent-session.service';
+import { EVALUATION_TOOL_BLOCKLIST } from '../../agent-intelligence/constants/evaluation-safety';
+import type { AgentWorkflowTemplate } from '../../agent-intelligence/models/agent-workflow-template.model';
+import { AgentPromptRegistryService } from '../../agent-intelligence/services/agent-prompt-registry.service';
+import { AgentWorkflowTemplateService } from '../../agent-intelligence/services/agent-workflow-template.service';
 
 export interface ExecuteMessageInput {
 	readonly sessionId: string;
@@ -35,6 +39,7 @@ export interface ExecuteMessageInput {
 	readonly context?: Record<string, unknown>;
 	readonly actorUserId?: string;
 	readonly actorEmail?: string;
+	readonly actorRoles?: string[];
 }
 
 export interface AgentSendResponsePayload {
@@ -65,7 +70,6 @@ export interface AgentSendResponsePayload {
 
 export interface StreamStartPayload {
 	readonly runId: string;
-	readonly streamUrl: string;
 	/** Server-persisted user message id (avoid duplicate optimistic ids in UI). */
 	readonly userMessageId: string;
 }
@@ -94,6 +98,12 @@ export class AgentOrchestratorService {
 		private readonly tests: TestRunnerService,
 		private readonly rag: RagContextBuilderService,
 		private readonly contextBuilder: AgentContextBuilderService,
+		@Optional()
+		@Inject(forwardRef(() => AgentPromptRegistryService))
+		private readonly promptRegistry: AgentPromptRegistryService | undefined,
+		@Optional()
+		@Inject(forwardRef(() => AgentWorkflowTemplateService))
+		private readonly workflowTemplates: AgentWorkflowTemplateService | undefined,
 	) {}
 
 	async executeMessage(input: ExecuteMessageInput): Promise<AgentSendResponsePayload> {
@@ -140,8 +150,7 @@ export class AgentOrchestratorService {
 			});
 		});
 
-		const streamUrl = `/agents/sessions/${encodeURIComponent(input.sessionId)}/runs/${encodeURIComponent(runId)}/events`;
-		return { runId, streamUrl, userMessageId: userMsg.id };
+		return { runId, userMessageId: userMsg.id };
 	}
 
 	private validateMessage(message: string): void {
@@ -263,7 +272,15 @@ export class AgentOrchestratorService {
 		run = await this.runs.addStep(runId, s3);
 		await emit('step_started', s3.title, runId, sessionId, agentSlug);
 
-		const plannedTools = this.planToolsForMessage(agentSlug, mode, message, sessionId);
+		const plannedTools = await this.planToolsForMessageAsync(
+			agentSlug,
+			mode,
+			message,
+			sessionId,
+			context,
+			emit,
+			runId,
+		);
 		await emit(
 			'step_completed',
 			`Planned ${plannedTools.length} tool call(s)`,
@@ -281,6 +298,7 @@ export class AgentOrchestratorService {
 			input.actorUserId,
 			plannedTools,
 			emit,
+			context,
 		);
 
 		run = await this.runs.updateStep(runId, s3.id, { status: 'completed', completedAt: isoNow() });
@@ -345,7 +363,14 @@ export class AgentOrchestratorService {
 				content: m.content,
 			}));
 
-		const systemPrompt = await this.rag.buildAugmentedSystemPrompt(cfg.systemPrompt, ragContext);
+		const { systemPrompt } = await this.resolveSystemPromptForProvider(
+			input,
+			cfg,
+			ragContext,
+			toolPhase.toolContextBlock,
+			emit,
+			runId,
+		);
 
 		const wrappedTools = this.contextBuilder.buildToolContextForProvider(toolPhase.toolContextBlock);
 		const aiReq: AiProviderRequest = {
@@ -488,7 +513,15 @@ export class AgentOrchestratorService {
 		await emit('step_completed', ragContext ? 'Knowledge context loaded' : 'No knowledge hits', runId, sessionId, agentSlug);
 
 		await emit('step_started', 'Tool execution', runId, sessionId, agentSlug);
-		const plannedStream = this.planToolsForMessage(agentSlug, mode, message, sessionId);
+		const plannedStream = await this.planToolsForMessageAsync(
+			agentSlug,
+			mode,
+			message,
+			sessionId,
+			context,
+			emit,
+			runId,
+		);
 		const toolPhaseStream = await this.runToolExecutionPhase(
 			sessionId,
 			runId,
@@ -497,6 +530,7 @@ export class AgentOrchestratorService {
 			input.actorUserId,
 			plannedStream,
 			emit,
+			context,
 		);
 		await emit(
 			'step_completed',
@@ -542,7 +576,14 @@ export class AgentOrchestratorService {
 				content: m.content,
 			}));
 
-		const systemPrompt = await this.rag.buildAugmentedSystemPrompt(cfg.systemPrompt, ragContext);
+		const { systemPrompt } = await this.resolveSystemPromptForProvider(
+			input,
+			cfg,
+			ragContext,
+			toolPhaseStream.toolContextBlock,
+			emit,
+			runId,
+		);
 		const wrappedStreamTools = this.contextBuilder.buildToolContextForProvider(toolPhaseStream.toolContextBlock);
 		const aiReq: AiProviderRequest = {
 			agentSlug,
@@ -700,15 +741,201 @@ export class AgentOrchestratorService {
 		return base;
 	}
 
-	private planToolsForMessage(
+	private async resolveSystemPromptForProvider(
+		input: ExecuteMessageInput,
+		cfg: NonNullable<ReturnType<AgentConfigRegistryService['getConfig']>>,
+		ragContext: string,
+		toolContextBlock: string | undefined,
+		emit: ReturnType<AgentOrchestratorService['makeEmit']>,
+		runId: string,
+	): Promise<{ systemPrompt: string }> {
+		const { sessionId, agentSlug, mode, message, context } = input;
+		let base = cfg.systemPrompt;
+		if (!this.promptRegistry) {
+			await emit(
+				'prompt_template_loaded',
+				'Prompt registry not loaded',
+				runId,
+				sessionId,
+				agentSlug,
+				{ fallback: true },
+			);
+			const systemPrompt = await this.rag.buildAugmentedSystemPrompt(base, ragContext);
+			return { systemPrompt };
+		}
+		try {
+			const active = await this.promptRegistry.getActiveTemplate(agentSlug, 'system');
+			if (active) {
+				await emit(
+					'prompt_template_loaded',
+					active.name,
+					runId,
+					sessionId,
+					agentSlug,
+					{ templateId: active.id, version: active.version },
+				);
+				const rendered = this.promptRegistry.renderContent(active, {
+					agentName: cfg.displayName,
+					agentRole: cfg.role,
+					mode,
+					userMessage: message,
+					ragContext: ragContext ?? '',
+					toolResults: toolContextBlock ?? '',
+					browserContext: String(context?.['browserContext'] ?? ''),
+					testResults: String(context?.['testResults'] ?? ''),
+					connectorResults: String(context?.['connectorResults'] ?? ''),
+				});
+				if (rendered.missingVariables.length === 0 && rendered.content.trim()) {
+					base = rendered.content;
+					await emit(
+						'prompt_template_rendered',
+						'System prompt rendered',
+						runId,
+						sessionId,
+						agentSlug,
+						{ templateId: rendered.templateId, version: rendered.version },
+					);
+				} else {
+					await emit(
+						'prompt_template_rendered',
+						'Fallback to static prompt',
+						runId,
+						sessionId,
+						agentSlug,
+						{ fallback: true, missingVariables: rendered.missingVariables, templateId: active.id },
+					);
+				}
+			} else {
+				await emit(
+					'prompt_template_loaded',
+					'No active system template',
+					runId,
+					sessionId,
+					agentSlug,
+					{ fallback: true },
+				);
+			}
+		} catch {
+			await emit(
+				'prompt_template_rendered',
+				'Prompt registry unavailable — static prompt',
+				runId,
+				sessionId,
+				agentSlug,
+				{ fallback: true },
+			);
+		}
+		const systemPrompt = await this.rag.buildAugmentedSystemPrompt(base, ragContext);
+		return { systemPrompt };
+	}
+
+	private async planToolsForMessageAsync(
 		agentSlug: string,
 		mode: ExecuteMessageInput['mode'],
 		message: string,
 		sessionId: string,
+		context: Record<string, unknown> | undefined,
+		emit: ReturnType<AgentOrchestratorService['makeEmit']>,
+		runId: string,
+	): Promise<PlannedToolCall[]> {
+		const evaluation = context?.['evaluation'] === true;
+		const evalAllowDanger = context?.['evalAllowBrowserAndTestTools'] === true;
+		const wf = (await this.workflowTemplates?.matchWorkflowForPrompt(agentSlug, message, mode)) ?? null;
+		if (wf) {
+			await emit('workflow_selected', wf.name, runId, sessionId, agentSlug, {
+				workflowKey: wf.key,
+				workflowId: wf.id,
+			});
+			const wfTools = this.workflowStepsToPlannedTools(
+				wf,
+				sessionId,
+				agentSlug,
+				emit,
+				runId,
+				evaluation,
+				evalAllowDanger,
+			);
+			return this.dedupeAndCap(wfTools);
+		}
+		const legacy = this.legacyKeywordPlan(agentSlug, mode, message, sessionId, { evaluation, evalAllowDanger });
+		return this.dedupeAndCap(legacy);
+	}
+
+	private workflowStepsToPlannedTools(
+		wf: AgentWorkflowTemplate,
+		sessionId: string,
+		agentSlug: string,
+		emit: ReturnType<AgentOrchestratorService['makeEmit']>,
+		runId: string,
+		evaluation: boolean,
+		evalAllowDanger: boolean,
 	): PlannedToolCall[] {
+		const raw: PlannedToolCall[] = [];
+		const push = (toolId: string, input: Record<string, unknown> = {}) => {
+			if (evaluation && !evalAllowDanger && EVALUATION_TOOL_BLOCKLIST.has(toolId)) return;
+			if (!this.toolRegistry.getTool(toolId)) return;
+			if (!this.toolPerm.canUseTool(agentSlug, toolId)) return;
+			raw.push({ toolId, input });
+		};
+		for (const step of wf.steps.slice(0, 15)) {
+			void emit('workflow_step_started', step.title, runId, sessionId, agentSlug, {
+				stepId: step.id,
+				workflowKey: wf.key,
+			});
+			if (step.type === 'run_tool' && step.toolId) {
+				const input = { ...(step.inputTemplate ?? {}), sessionId, agentSlug };
+				push(step.toolId, input);
+			} else if (step.type === 'generate_artifact') {
+				push('artifact_create_markdown', {
+					title: step.title,
+					content: `# ${step.title}\n\n`,
+					...(step.inputTemplate ?? {}),
+				});
+			} else if (step.type === 'search_context') {
+				push('connector_repo_search', { query: step.title });
+			} else if (step.type === 'test_action') {
+				push('test_run_smoke_mock', {});
+			}
+			void emit('workflow_step_completed', step.title, runId, sessionId, agentSlug, {
+				stepId: step.id,
+				workflowKey: wf.key,
+			});
+		}
+		return raw;
+	}
+
+	private dedupeAndCap(raw: PlannedToolCall[]): PlannedToolCall[] {
+		const seen = new Set<string>();
+		const deduped: PlannedToolCall[] = [];
+		for (const p of raw) {
+			if (seen.has(p.toolId)) continue;
+			seen.add(p.toolId);
+			deduped.push(p);
+		}
+		let conn = 0;
+		const out: PlannedToolCall[] = [];
+		for (const p of deduped) {
+			const isConn = p.toolId.startsWith('connector_');
+			if (isConn && conn >= 3) continue;
+			if (isConn) conn++;
+			out.push(p);
+		}
+		return out.slice(0, 6);
+	}
+
+	private legacyKeywordPlan(
+		agentSlug: string,
+		mode: ExecuteMessageInput['mode'],
+		message: string,
+		sessionId: string,
+		opts?: { evaluation?: boolean; evalAllowDanger?: boolean },
+	): PlannedToolCall[] {
+		const evaluation = opts?.evaluation === true;
+		const evalAllowDanger = opts?.evalAllowDanger === true;
 		const m = message.toLowerCase();
 		const raw: PlannedToolCall[] = [];
 		const push = (toolId: string, input: Record<string, unknown> = {}) => {
+			if (evaluation && !evalAllowDanger && EVALUATION_TOOL_BLOCKLIST.has(toolId)) return;
 			if (!this.toolRegistry.getTool(toolId)) return;
 			if (!this.toolPerm.canUseTool(agentSlug, toolId)) return;
 			raw.push({ toolId, input });
@@ -877,22 +1104,7 @@ export class AgentOrchestratorService {
 		if (/\bsql|query|report\b/i.test(m) && agentSlug !== 'dato') push('sql_generate', {});
 		if (/\bdocument|docs\b/i.test(m) && agentSlug !== 'doco') push('docs_generate', {});
 
-		const seen = new Set<string>();
-		const deduped: PlannedToolCall[] = [];
-		for (const p of raw) {
-			if (seen.has(p.toolId)) continue;
-			seen.add(p.toolId);
-			deduped.push(p);
-		}
-		let conn = 0;
-		const out: PlannedToolCall[] = [];
-		for (const p of deduped) {
-			const isConn = p.toolId.startsWith('connector_');
-			if (isConn && conn >= 3) continue;
-			if (isConn) conn++;
-			out.push(p);
-		}
-		return out.slice(0, 6);
+		return raw;
 	}
 
 	private async runToolExecutionPhase(
@@ -903,6 +1115,7 @@ export class AgentOrchestratorService {
 		actorUserId: string | undefined,
 		planned: PlannedToolCall[],
 		emit: ReturnType<AgentOrchestratorService['makeEmit']>,
+		context?: Record<string, unknown>,
 	): Promise<{
 		stoppedForApproval: boolean;
 		approvalId?: string;
@@ -915,16 +1128,20 @@ export class AgentOrchestratorService {
 		let browserPatch: AgentSendResponsePayload['browserPatch'] = null;
 		let testResults: AgentSendResponsePayload['testResults'] = null;
 
+		const evaluation = context?.['evaluation'] === true;
 		for (const p of planned) {
-			const res = await this.toolExec.execute({
-				runId,
-				sessionId,
-				agentSlug,
-				mode,
-				toolId: p.toolId,
-				input: p.input,
-				actorUserId,
-			});
+			const res = await this.toolExec.execute(
+				{
+					runId,
+					sessionId,
+					agentSlug,
+					mode,
+					toolId: p.toolId,
+					input: p.input,
+					actorUserId,
+				},
+				evaluation ? { forceApproved: true } : undefined,
+			);
 			if (res.status === 'requires_approval') {
 				return {
 					stoppedForApproval: true,

@@ -34,6 +34,12 @@ const WRITE_TOOL_SUBSTRINGS = [
 	'commit',
 	'push',
 	'merge',
+	'chmod',
+	'chown',
+	' rm',
+	'/rm',
+	' mv',
+	'/mv',
 ];
 
 const MCP_CALL_AGENTS = new Set(['fronto', 'doco', 'producto']);

@@ -21,6 +21,7 @@ type UserRow = {
 	department: string | null;
 	jobTitle: string | null;
 	createdAt: string;
+	lastLoginAt?: string | null;
 	userRoles: Array<{ role: { key: string; name: string } }>;
 };
 
@@ -78,7 +79,7 @@ function extractApiMessage(err: unknown): string {
 					class="overflow-x-auto rounded-xl border border-violet-200/50 dark:border-indigo-800/60"
 				>
 					<table
-						class="w-full min-w-[800px] text-left text-sm text-slate-800 dark:text-slate-200"
+						class="w-full min-w-[920px] text-left text-sm text-slate-800 dark:text-slate-200"
 					>
 						<thead
 							class="bg-violet-50/80 text-xs font-semibold uppercase tracking-wide text-violet-900 dark:bg-indigo-950/60 dark:text-violet-200"
@@ -89,6 +90,7 @@ function extractApiMessage(err: unknown): string {
 								<th class="px-3 py-2.5">Dept / Title</th>
 								<th class="px-3 py-2.5">Status</th>
 								<th class="px-3 py-2.5">Roles</th>
+								<th class="px-3 py-2.5">Last login</th>
 								<th class="px-3 py-2.5">Created</th>
 								<th class="px-3 py-2.5 text-right">Actions</th>
 							</tr>
@@ -115,6 +117,15 @@ function extractApiMessage(err: unknown): string {
 									<td class="px-3 py-2 capitalize">{{ u.status }}</td>
 									<td class="px-3 py-2 text-xs">
 										{{ formatRoles(u) }}
+									</td>
+									<td
+										class="px-3 py-2 text-xs text-slate-500 dark:text-slate-400"
+									>
+										@if (u.lastLoginAt) {
+											{{ u.lastLoginAt | date: 'medium' }}
+										} @else {
+											—
+										}
 									</td>
 									<td
 										class="px-3 py-2 text-xs text-slate-500 dark:text-slate-400"

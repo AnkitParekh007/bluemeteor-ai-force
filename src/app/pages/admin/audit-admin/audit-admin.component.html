@@ -1,0 +1,67 @@
+<div class="mx-auto max-w-6xl space-y-4">
+	<app-admin-section-header
+		title="Audit log explorer"
+		subtitle="Filtered audit entries. Details may be redacted server-side; no tokens are shown."
+	/>
+
+	<div class="flex flex-wrap items-end gap-2 text-xs">
+		<label class="flex flex-col gap-0.5">
+			Action contains
+			<input class="rounded border px-2 py-1 dark:bg-slate-900" [(ngModel)]="actionQ" />
+		</label>
+		<label class="flex flex-col gap-0.5">
+			Agent
+			<input class="rounded border px-2 py-1 dark:bg-slate-900" [(ngModel)]="agentQ" />
+		</label>
+		<label class="flex flex-col gap-0.5">
+			Run id
+			<input class="rounded border px-2 py-1 dark:bg-slate-900" [(ngModel)]="runQ" />
+		</label>
+		<label class="flex flex-col gap-0.5">
+			Actor email contains
+			<input class="rounded border px-2 py-1 dark:bg-slate-900" [(ngModel)]="actorQ" />
+		</label>
+		<p-button label="Search" size="small" (onClick)="reload()" />
+		<p-button label="Export CSV" size="small" [outlined]="true" (onClick)="exportCsv()" />
+	</div>
+
+	<div class="overflow-x-auto rounded-lg border dark:border-slate-700">
+		<table class="w-full min-w-[900px] text-left text-[11px]">
+			<thead class="bg-slate-100/80 dark:bg-slate-800/80">
+				<tr>
+					<th class="px-2 py-2">When</th>
+					<th class="px-2 py-2">Action</th>
+					<th class="px-2 py-2">Actor</th>
+					<th class="px-2 py-2">Agent</th>
+					<th class="px-2 py-2">Run</th>
+					<th class="px-2 py-2 text-right">Links</th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (r of rows(); track r.id) {
+					<tr class="border-t border-slate-200/70 dark:border-slate-700">
+						<td class="px-2 py-1 whitespace-nowrap">{{ r.createdAt | date: 'medium' }}</td>
+						<td class="px-2 py-1">{{ r.action }}</td>
+						<td class="px-2 py-1">{{ r.actorEmail || '—' }}</td>
+						<td class="px-2 py-1">{{ r.agentSlug || '—' }}</td>
+						<td class="px-2 py-1 font-mono text-[10px]">{{ r.runId || '—' }}</td>
+						<td class="px-2 py-1 text-right space-x-1">
+							@if (r.runId) {
+								<button type="button" class="text-violet-700 underline dark:text-violet-300" (click)="copyTrace(r.runId!)">
+									Copy run id
+								</button>
+							}
+							@if (r.agentSlug && r.sessionId) {
+								<a
+									[routerLink]="['/agents', r.agentSlug]"
+									class="text-violet-700 underline dark:text-violet-300"
+									>Session</a
+								>
+							}
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+</div>

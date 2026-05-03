@@ -1,5 +1,7 @@
 export const environment = {
 	production: false,
+	/** Shown in Admin Console header (no secrets). */
+	deployEnv: 'local' as 'local' | 'docker' | 'production',
 	agentApiBaseUrl: 'http://localhost:3000',
 	/**
 	 * Live Nest orchestrator on `agentApiBaseUrl`. Set to `true` if the server is not running

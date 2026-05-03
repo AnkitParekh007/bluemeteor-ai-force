@@ -1,0 +1,2 @@
+# PostgreSQL migrations (Docker / pilot). Local SQLite uses `prisma db push` against prisma/schema.prisma.
+provider = "postgresql"

@@ -45,7 +45,14 @@ export type AgentRuntimeEventType =
 	| 'connector_fallback_used'
 	| 'connector_disabled'
 	| 'run_completed'
-	| 'run_failed';
+	| 'run_failed'
+	| 'prompt_template_loaded'
+	| 'prompt_template_rendered'
+	| 'workflow_selected'
+	| 'workflow_step_started'
+	| 'workflow_step_completed'
+	| 'evaluation_run_started'
+	| 'evaluation_run_completed';
 
 export interface AgentRuntimeEvent {
 	readonly id: string;

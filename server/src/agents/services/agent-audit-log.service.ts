@@ -33,8 +33,16 @@ export class AgentAuditLogService {
 		});
 	}
 
-	async listRecent(limit = 500): Promise<AuditLogEntry[]> {
-		return this.repo.listRecent(limit);
+	async listRecent(
+		limit = 500,
+		filters?: {
+			readonly actionContains?: string;
+			readonly agentSlug?: string;
+			readonly runId?: string;
+			readonly actorEmailContains?: string;
+		},
+	): Promise<AuditLogEntry[]> {
+		return this.repo.listRecent(limit, filters);
 	}
 
 	async listBySession(sessionId: string): Promise<AuditLogEntry[]> {

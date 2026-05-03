@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { AuthModule } from '../auth/auth.module';
 import { BrowserModule } from '../browser/browser.module';
 import { PlaywrightTestingController } from './playwright-testing.controller';
 import { PlaywrightSpecRepository } from './repositories/playwright-spec.repository';
@@ -9,7 +10,7 @@ import { PlaywrightTestRunnerService } from './services/playwright-test-runner.s
 import { TestRunnerService } from './services/test-runner.service';
 
 @Module({
-	imports: [BrowserModule],
+	imports: [BrowserModule, AuthModule],
 	controllers: [PlaywrightTestingController],
 	providers: [
 		TestRunnerService,
@@ -18,6 +19,6 @@ import { TestRunnerService } from './services/test-runner.service';
 		PlaywrightTestCaseRepository,
 		PlaywrightTestRunnerService,
 	],
-	exports: [TestRunnerService, PlaywrightTestRunnerService],
+	exports: [TestRunnerService, PlaywrightTestRunnerService, PlaywrightTestRunRepository],
 })
 export class TestingModule {}

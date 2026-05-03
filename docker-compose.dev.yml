@@ -1,0 +1,15 @@
+# Optional overrides for local pilot debugging.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+services:
+  backend:
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: development
+      AGENT_PROVIDER: mock
+      # Relax production validation while debugging image builds only — do not use in real prod.
+      # JWT secrets must still be set for login when not using defaults.
+
+  postgres:
+    ports:
+      - '5432:5432'

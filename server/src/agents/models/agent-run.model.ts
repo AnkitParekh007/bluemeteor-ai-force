@@ -73,4 +73,5 @@ export interface AgentRun {
 	readonly error?: string;
 	readonly actorUserId?: string;
 	readonly actorEmail?: string;
+	readonly traceId?: string;
 }

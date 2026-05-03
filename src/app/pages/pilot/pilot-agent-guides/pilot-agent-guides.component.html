@@ -1,0 +1,11 @@
+<div class="space-y-4">
+	<p class="text-sm text-slate-600 dark:text-slate-400">
+		Each card summarizes how to get value from an agent during the pilot. Use “Open agent” to jump into the
+		workspace, or “Submit feedback” after a real task.
+	</p>
+	<div class="grid gap-4 lg:grid-cols-2">
+		@for (g of guides; track g.agentSlug) {
+			<app-pilot-agent-guide-card [guide]="g" />
+		}
+	</div>
+</div>

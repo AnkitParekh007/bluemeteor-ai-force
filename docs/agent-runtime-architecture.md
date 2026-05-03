@@ -1,20 +1,27 @@
 # Agent runtime architecture
 
-## Authenticated browser flow
+## Overview
 
-1. User or Testo creates a **browser profile** (target URL allowlisted).
-2. **Auth capture** opens a fresh Playwright context on the login URL.
-3. After login, **storage state** is written to disk; profile status becomes **ready**.
-4. **`browser_open_authenticated`** recreates a context with `storageState` and navigates to the requested URL.
-5. Runtime events (`browser_profile_ready`, `browser_authenticated_session_opened`, etc.) update the workspace UI **without** exposing secrets.
+The Angular workspace sends messages to `AgentOrchestratorService`, which plans tools, executes them through `ToolExecutorService`, then calls the configured LLM provider. Results stream over SSE as `AgentRuntimeEvent` records.
 
-## Playwright test execution flow
+## Agent intelligence layer
 
-1. Planner may suggest **`playwright_generate_from_template`** / **`playwright_run_template`** in Act mode.
-2. **ToolExecutorService** enforces RBAC, mode, and approval.
-3. **PlaywrightTestRunnerService** runs allowlisted templates when `ENABLE_REAL_PLAYWRIGHT_TESTS=true`, or records a **blocked** run when disabled.
-4. Results and **safe asset URLs** are attached to artifacts and events (`playwright_run_completed`, etc.).
+Before the provider call, the orchestrator:
 
-## Testo QA workflow
+1. Loads the **active system prompt template** from `AgentPromptRegistryService` (if present) and renders variables (`agentName`, `agentRole`, `mode`, `userMessage`, `ragContext`, `toolResults`, etc.).
+2. Falls back to the static `systemPrompt` from `INTERNAL_AGENT_CONFIGS` if no template is active or required variables are missing.
+3. Augments with RAG via `RagContextBuilderService` as before.
 
-Testo combines **connectors** (Jira/repo/docs), **browser profiles**, **template smoke runs**, and **spec artifacts**. Fronto reuses **profiles** and **DOM/screenshot** tools for authenticated UI review.
+Tool planning:
+
+1. Calls `AgentWorkflowTemplateService.matchWorkflowForPrompt`.
+2. If a workflow matches, converts `run_tool` / `generate_artifact` / `search_context` / `test_action` steps into planned tool calls (respecting evaluation blocklists when `context.evaluation` is set).
+3. Otherwise uses the existing keyword-based planner.
+
+Skill packs extend tool allowance through `ToolPermissionService.canUseTool` using an in-memory union of active pack tool ids.
+
+## Evaluation flow
+
+`AgentEvaluationService` creates a session, sets `context: { evaluation: true }`, and reuses the normal orchestrator path with stricter tool filtering and `forceApproved` tool execution to avoid blocking on approval UI during unattended runs.
+
+See [agent-intelligence-architecture.md](./agent-intelligence-architecture.md) for registry details.

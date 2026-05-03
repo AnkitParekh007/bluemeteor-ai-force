@@ -1,0 +1,19 @@
+<div class="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/80">
+	<div class="flex items-start justify-between gap-2">
+		<div>
+			<p class="font-medium">{{ workflow().name }}</p>
+			<p class="text-xs text-slate-500">{{ workflow().key }} · {{ workflow().category }} · mode {{ workflow().mode }}</p>
+		</div>
+		<span class="rounded bg-slate-100 px-2 py-0.5 text-xs dark:bg-slate-800">{{ workflow().status }}</span>
+	</div>
+	<p class="mt-2 text-xs text-slate-600 dark:text-slate-400">Tools: {{ workflow().requiredTools.join(', ') || '—' }}</p>
+	<p class="text-xs text-slate-600 dark:text-slate-400">Artifacts: {{ workflow().outputArtifactTypes.join(', ') || '—' }}</p>
+	<ol class="mt-3 space-y-2 border-l-2 border-violet-200 pl-3 dark:border-violet-800">
+		@for (s of workflow().steps; track s.id) {
+			<li class="text-sm">
+				<span class="font-medium">{{ s.title }}</span>
+				<span class="text-xs text-slate-500"> — {{ s.type }}{{ s.toolId ? ' · ' + s.toolId : '' }}</span>
+			</li>
+		}
+	</ol>
+</div>

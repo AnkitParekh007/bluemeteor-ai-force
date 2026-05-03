@@ -1,0 +1,51 @@
+<div class="ops-wrap">
+	<h1>Operations</h1>
+	<p class="muted">Internal pilot diagnostics. No secrets or tokens are requested or displayed.</p>
+
+	<div class="ops-actions">
+		<button type="button" class="btn-primary" (click)="refreshAll()">Refresh all</button>
+		<button type="button" (click)="copyDiagnostics()">Copy diagnostics summary</button>
+	</div>
+
+	<section>
+		<h2>Backend health <button type="button" (click)="refreshHealth()">Refresh</button></h2>
+		<pre>{{ healthJson() }}</pre>
+	</section>
+
+	<section>
+		<h2>Readiness <button type="button" (click)="refreshReadiness()">Refresh</button></h2>
+		<pre>{{ readyJson() }}</pre>
+	</section>
+
+	<section>
+		<h2>Metrics <button type="button" (click)="refreshMetrics()">Refresh</button></h2>
+		<pre>{{ metricsJson() }}</pre>
+	</section>
+
+	<section>
+		<h2>Security health <button type="button" (click)="refreshSecurity()">Refresh</button></h2>
+		<pre>{{ securityJson() }}</pre>
+	</section>
+
+	<section>
+		<h2>Runtime health <button type="button" (click)="refreshRuntime()">Refresh</button></h2>
+		<pre>{{ runtimeJson() }}</pre>
+	</section>
+
+	<section>
+		<h2>Connectors <button type="button" (click)="refreshConnectors()">Refresh</button></h2>
+		<pre>{{ connectorJson() }}</pre>
+	</section>
+
+	<section>
+		<h2>MCP <button type="button" (click)="refreshMcp()">Refresh</button></h2>
+		<pre>{{ mcpJson() }}</pre>
+	</section>
+
+	@if (diagnosticsJson().length > 0) {
+		<section>
+			<h2>Last copied summary</h2>
+			<pre>{{ diagnosticsJson() }}</pre>
+		</section>
+	}
+</div>

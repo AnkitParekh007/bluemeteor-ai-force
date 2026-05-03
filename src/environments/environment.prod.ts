@@ -1,5 +1,6 @@
 export const environment = {
 	production: true,
+	deployEnv: 'production' as const,
 	/** Nest orchestrator: same base as Angular `/api` proxy or gateway. */
 	agentApiBaseUrl: '/api',
 	/** Production uses real Nest API — mock transport is off (see `AgentSendResponse` contract on POST …/messages). */

@@ -1,6 +1,13 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 
+import {
+	RequirePlaywrightSpecAccess,
+	RequireSessionAccess,
+	RequireTestRunAccess,
+} from '../auth/decorators/require-session-access.decorator';
 import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
+import { SessionAccessGuard } from '../auth/guards/session-access.guard';
 import { PlaywrightSpecRepository } from './repositories/playwright-spec.repository';
 import { PlaywrightTestRunnerService } from './services/playwright-test-runner.service';
 
@@ -12,6 +19,8 @@ export class PlaywrightTestingController {
 	) {}
 
 	@Get('runs')
+	@UseGuards(SessionAccessGuard)
+	@RequireSessionAccess('view', 'sessionId', 'query')
 	@RequirePermissions('tools.view')
 	listRuns(@Query('sessionId') sessionId: string) {
 		if (!sessionId?.trim()) return [];
@@ -19,12 +28,16 @@ export class PlaywrightTestingController {
 	}
 
 	@Get('runs/:testRunId')
+	@UseGuards(SessionAccessGuard)
+	@RequireTestRunAccess('view')
 	@RequirePermissions('tools.view')
 	getRun(@Param('testRunId') testRunId: string) {
 		return this.runner.getTestRun(testRunId);
 	}
 
 	@Get('specs')
+	@UseGuards(SessionAccessGuard)
+	@RequireSessionAccess('view', 'sessionId', 'query')
 	@RequirePermissions('tools.view')
 	listSpecs(@Query('sessionId') sessionId: string) {
 		if (!sessionId?.trim()) return [];
@@ -32,6 +45,8 @@ export class PlaywrightTestingController {
 	}
 
 	@Get('specs/:specId')
+	@UseGuards(SessionAccessGuard)
+	@RequirePlaywrightSpecAccess('view')
 	@RequirePermissions('tools.view')
 	async getSpec(@Param('specId') specId: string) {
 		const s = await this.specs.findById(specId);
@@ -40,6 +55,9 @@ export class PlaywrightTestingController {
 	}
 
 	@Post('specs/generate')
+	@Throttle({ agent: { limit: 15, ttl: 60_000 } })
+	@UseGuards(SessionAccessGuard)
+	@RequireSessionAccess('use', 'sessionId', 'body')
 	@RequirePermissions('tools.execute.low')
 	generateSpec(
 		@Body()
@@ -61,6 +79,9 @@ export class PlaywrightTestingController {
 	}
 
 	@Post('specs/:specId/validate')
+	@Throttle({ agent: { limit: 20, ttl: 60_000 } })
+	@UseGuards(SessionAccessGuard)
+	@RequirePlaywrightSpecAccess('use')
 	@RequirePermissions('tools.execute.medium')
 	async validateSpec(@Param('specId') specId: string) {
 		const spec = await this.specs.findById(specId);
@@ -72,6 +93,9 @@ export class PlaywrightTestingController {
 	}
 
 	@Post('templates/:templateKey/run')
+	@Throttle({ agent: { limit: 10, ttl: 60_000 } })
+	@UseGuards(SessionAccessGuard)
+	@RequireSessionAccess('use', 'sessionId', 'body')
 	@RequirePermissions('tools.execute.medium')
 	runTemplate(
 		@Param('templateKey') templateKey: string,
@@ -88,6 +112,9 @@ export class PlaywrightTestingController {
 	}
 
 	@Post('specs/:specId/run')
+	@Throttle({ agent: { limit: 8, ttl: 60_000 } })
+	@UseGuards(SessionAccessGuard)
+	@RequirePlaywrightSpecAccess('use')
 	@RequirePermissions('tools.execute.high')
 	runSpec(
 		@Param('specId') specId: string,

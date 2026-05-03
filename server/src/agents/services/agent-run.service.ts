@@ -20,9 +20,10 @@ export class AgentRunService {
 		agentSlug: string,
 		mode: AgentWorkspaceMode,
 		userMessage: string,
-		actor?: { actorUserId?: string; actorEmail?: string },
+		actor?: { actorUserId?: string; actorEmail?: string; traceId?: string },
 	): Promise<AgentRun> {
 		const t = new Date();
+		const traceId = actor?.traceId ?? newId('trc');
 		return this.runs.create({
 			id: newId('run'),
 			sessionId,
@@ -34,6 +35,7 @@ export class AgentRunService {
 			updatedAt: t,
 			actorUserId: actor?.actorUserId ?? null,
 			actorEmail: actor?.actorEmail ?? null,
+			traceId,
 		});
 	}
 

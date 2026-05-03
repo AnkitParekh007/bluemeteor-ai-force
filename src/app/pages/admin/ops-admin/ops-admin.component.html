@@ -1,0 +1,43 @@
+<div class="mx-auto max-w-6xl space-y-4">
+	<div>
+		<h1 class="text-xl font-semibold">Ops</h1>
+		<p class="text-sm text-slate-600 dark:text-slate-400">
+			Health, readiness, metrics, and security endpoints — safe JSON only.
+		</p>
+	</div>
+	<div class="flex flex-wrap gap-2">
+		<button
+			type="button"
+			class="rounded-md bg-slate-900 px-3 py-1.5 text-sm text-white dark:bg-slate-100 dark:text-slate-900"
+			(click)="refreshAll()"
+		>
+			Refresh all
+		</button>
+		<button
+			type="button"
+			class="rounded-md border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-600"
+			(click)="copyDiagnostics()"
+		>
+			Copy diagnostics
+		</button>
+		<a routerLink="/admin/audit" class="rounded-md border px-3 py-1.5 text-sm dark:border-slate-600">Open audit</a>
+	</div>
+	<div class="grid gap-3 lg:grid-cols-2">
+		<section>
+			<h2 class="text-xs font-semibold uppercase text-slate-500">GET /health</h2>
+			<pre class="mt-1 max-h-56 overflow-auto rounded border border-slate-200/80 bg-white p-2 text-xs dark:border-slate-700 dark:bg-slate-900">{{ healthJson() }}</pre>
+		</section>
+		<section>
+			<h2 class="text-xs font-semibold uppercase text-slate-500">GET /ready</h2>
+			<pre class="mt-1 max-h-56 overflow-auto rounded border border-slate-200/80 bg-white p-2 text-xs dark:border-slate-700 dark:bg-slate-900">{{ readyJson() }}</pre>
+		</section>
+		<section>
+			<h2 class="text-xs font-semibold uppercase text-slate-500">GET /metrics</h2>
+			<pre class="mt-1 max-h-56 overflow-auto rounded border border-slate-200/80 bg-white p-2 text-xs dark:border-slate-700 dark:bg-slate-900">{{ metricsJson() }}</pre>
+		</section>
+		<section>
+			<h2 class="text-xs font-semibold uppercase text-slate-500">GET /security/health</h2>
+			<pre class="mt-1 max-h-56 overflow-auto rounded border border-slate-200/80 bg-white p-2 text-xs dark:border-slate-700 dark:bg-slate-900">{{ securityJson() }}</pre>
+		</section>
+	</div>
+</div>

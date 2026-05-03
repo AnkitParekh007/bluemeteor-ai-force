@@ -1,0 +1,70 @@
+<div class="space-y-6">
+	<div class="flex flex-wrap items-center gap-3">
+		<p class="text-sm text-slate-600 dark:text-slate-400">
+			Gate aggregates health, admin summary signals, connectors, MCP, runs, and priority agent scores (Fronto,
+			Testo, Producto, Doco).
+		</p>
+		<button
+			type="button"
+			(click)="loadReadiness()"
+			class="rounded-lg border border-violet-200 px-3 py-1.5 text-xs font-semibold dark:border-indigo-700"
+		>
+			Refresh
+		</button>
+	</div>
+
+	@if (loading()) {
+		<p class="text-sm text-slate-500">Loading readiness…</p>
+	} @else if (error(); as err) {
+		<p class="text-sm text-rose-700 dark:text-rose-300">{{ err }}</p>
+	} @else {
+		<div
+			class="rounded-xl border px-4 py-3 text-sm font-semibold"
+			[class.border-emerald-300]="gate() === 'ready'"
+			[class.bg-emerald-50]="gate() === 'ready'"
+			[class.border-amber-300]="gate() === 'ready_with_warnings'"
+			[class.bg-amber-50]="gate() === 'ready_with_warnings'"
+			[class.border-rose-300]="gate() === 'not_ready'"
+			[class.bg-rose-50]="gate() === 'not_ready'"
+		>
+			Pilot gate: {{ gate() }}
+		</div>
+
+		@for (sev of severities; track sev) {
+			<div class="space-y-2">
+				<h3 class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ sev }}</h3>
+				<div class="space-y-2">
+					@for (c of checksBySeverity(sev); track c.id) {
+						<app-pilot-readiness-check [check]="c" />
+					}
+				</div>
+			</div>
+		}
+
+		<div class="flex flex-wrap gap-2">
+			<button
+				type="button"
+				(click)="generateReport()"
+				[disabled]="reportLoading()"
+				class="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+			>
+				{{ reportLoading() ? 'Generating…' : 'Generate pilot readiness report' }}
+			</button>
+			@if (reportMd(); as md) {
+				<button
+					type="button"
+					(click)="copyReport()"
+					class="rounded-lg border border-violet-200 px-4 py-2 text-xs font-semibold dark:border-indigo-700"
+				>
+					Copy report (markdown)
+				</button>
+			}
+		</div>
+
+		@if (reportMd(); as md) {
+			<pre
+				class="max-h-[28rem] overflow-auto rounded-xl border border-violet-200/70 bg-white/95 p-4 text-xs text-slate-800 dark:border-indigo-800 dark:bg-slate-900 dark:text-slate-100"
+			>{{ md }}</pre>
+		}
+	}
+</div>

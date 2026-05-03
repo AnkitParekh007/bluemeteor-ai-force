@@ -8,6 +8,7 @@ export interface AgentStreamStartResponse {
 	readonly runId: string;
 	readonly streamUrl: string;
 	readonly userMessageId: string;
+	readonly streamTokenExpiresAt: string;
 }
 
 import { environment } from '../../../environments/environment';
@@ -165,10 +166,14 @@ export class AgentApiService {
 	/** Subscribe to `GET …/runs/:runId/events` (SSE). */
 	connectToRunEvents(streamUrl: string): Observable<AgentRuntimeEvent> {
 		return new Observable<AgentRuntimeEvent>((sub) => {
+			const base = this.base();
+			const rel = streamUrl.startsWith('/') ? streamUrl : `/${streamUrl}`;
 			const url =
 				streamUrl.startsWith('http://') || streamUrl.startsWith('https://')
 					? streamUrl
-					: `${this.base()}${streamUrl.startsWith('/') ? '' : '/'}${streamUrl}`;
+					: base === '/api' && rel.startsWith('/api/')
+						? rel
+						: `${base}${rel}`;
 			const es = new EventSource(url);
 			let terminal = false;
 			const closeQuietly = () => {
@@ -191,7 +196,7 @@ export class AgentApiService {
 			es.onerror = () => {
 				if (terminal) return;
 				closeQuietly();
-				sub.error(new Error('Connection lost (SSE)'));
+				sub.error(new Error('Live stream connection failed. Try again or refresh the page.'));
 			};
 			return () => {
 				closeQuietly();

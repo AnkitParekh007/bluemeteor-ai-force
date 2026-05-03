@@ -16,6 +16,7 @@ import { AgentAuditLogService } from './services/agent-audit-log.service';
 import { AgentEventBusService } from './services/agent-event-bus.service';
 import { AgentContextBuilderService } from './services/agent-context-builder.service';
 import { AgentOrchestratorService } from './services/agent-orchestrator.service';
+import { AgentStreamTokenService } from './services/agent-stream-token.service';
 import { AgentRuntimeHealthService } from './services/agent-runtime-health.service';
 import { AgentRunService } from './services/agent-run.service';
 import { AgentSessionService } from './services/agent-session.service';
@@ -25,14 +26,18 @@ import { RagModule } from '../rag/rag.module';
 import { ProvidersModule } from '../providers/providers.module';
 import { TestingModule } from '../testing/testing.module';
 import { ToolsModule } from '../tools/tools.module';
+import { AgentIntelligenceModule } from '../agent-intelligence/agent-intelligence.module';
+import { ObservabilityModule } from '../observability/observability.module';
 
 @Module({
 	imports: [
+		ObservabilityModule,
 		AgentCoreModule,
 		AuthModule,
 		RagModule,
 		ProvidersModule,
 		forwardRef(() => ToolsModule),
+		forwardRef(() => AgentIntelligenceModule),
 		BrowserModule,
 		TestingModule,
 	],
@@ -53,6 +58,7 @@ import { ToolsModule } from '../tools/tools.module';
 		AgentAuditLogService,
 		AgentContextBuilderService,
 		AgentOrchestratorService,
+		AgentStreamTokenService,
 		AgentRuntimeHealthService,
 	],
 	exports: [

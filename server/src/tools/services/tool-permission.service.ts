@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional, forwardRef } from '@nestjs/common';
 
+import { AgentSkillPackRegistryService } from '../../agent-intelligence/services/agent-skill-pack-registry.service';
 import { AppConfigService } from '../../config/app-config.service';
 import { AgentConfigRegistryService } from '../../agents/services/agent-config-registry.service';
 import type { AgentWorkspaceMode } from '../../agents/models/agent-session.model';
@@ -25,21 +26,37 @@ export class ToolPermissionService {
 		private readonly appConfig: AppConfigService,
 		private readonly rbac: RbacService,
 		private readonly mcpAdapter: McpAdapterService,
+		@Optional()
+		@Inject(forwardRef(() => AgentSkillPackRegistryService))
+		private readonly skillPacks: AgentSkillPackRegistryService | undefined,
 	) {}
 
 	canUseTool(agentSlug: string, toolId: string): boolean {
-		return this.registry.canUseTool(agentSlug, toolId);
+		const c = this.registry.getConfig(agentSlug);
+		if (!c) return false;
+		if (c.deniedTools.includes(toolId)) return false;
+		const staticPerm = c.allowedTools.find((t) => t.toolId === toolId);
+		if (staticPerm?.enabled) return true;
+		return this.skillPacks?.isToolAllowedBySkillPackSync(agentSlug, toolId) ?? false;
 	}
 
 	requiresApproval(agentSlug: string, toolId: string): boolean {
-		return this.registry.requiresApproval(agentSlug, toolId);
+		if (this.registry.requiresApproval(agentSlug, toolId)) return true;
+		const c = this.registry.getConfig(agentSlug);
+		const staticPerm = c?.allowedTools.find((t) => t.toolId === toolId);
+		if (staticPerm) return false;
+		if (this.skillPacks?.isToolAllowedBySkillPackSync(agentSlug, toolId)) {
+			return this.tools.getTool(toolId)?.requiresApproval ?? false;
+		}
+		return false;
 	}
 
 	getRiskLevel(agentSlug: string, toolId: string): ToolRiskLevel {
 		const def = this.tools.getTool(toolId);
 		const cfg = this.registry.getConfig(agentSlug);
 		const perm = cfg?.allowedTools.find((t) => t.toolId === toolId);
-		return (perm?.riskLevel as ToolRiskLevel) ?? def?.riskLevel ?? 'low';
+		if (perm?.riskLevel) return perm.riskLevel as ToolRiskLevel;
+		return def?.riskLevel ?? 'low';
 	}
 
 	isToolBlocked(agentSlug: string, toolId: string): boolean {

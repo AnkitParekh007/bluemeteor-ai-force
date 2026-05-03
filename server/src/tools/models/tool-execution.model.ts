@@ -19,6 +19,8 @@ export interface ToolExecutionRequest {
 	readonly requestedBy?: string;
 	/** When set, RBAC is enforced via permission checks on the loaded user. */
 	readonly actorUserId?: string;
+	/** When set, browser tool execution targets this Playwright browser session instead of getOrCreateActiveSession. */
+	readonly targetBrowserSessionId?: string;
 }
 
 export interface ToolExecutionResult {

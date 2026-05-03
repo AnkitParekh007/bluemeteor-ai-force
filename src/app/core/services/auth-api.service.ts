@@ -93,6 +93,7 @@ export class AuthApiService {
 			department: string | null;
 			jobTitle: string | null;
 			createdAt: string;
+			lastLoginAt?: string | null;
 			userRoles: Array<{ role: { key: string; name: string } }>;
 		}>
 	> {
@@ -105,12 +106,21 @@ export class AuthApiService {
 				department: string | null;
 				jobTitle: string | null;
 				createdAt: string;
+				lastLoginAt?: string | null;
 				userRoles: Array<{ role: { key: string; name: string } }>;
 			}>
 		>;
 	}
 
-	listAuditLogs(limit = 200): Observable<
+	listAuditLogs(
+		limit = 200,
+		filters?: {
+			readonly action?: string;
+			readonly agentSlug?: string;
+			readonly runId?: string;
+			readonly actorEmail?: string;
+		},
+	): Observable<
 		Array<{
 			id: string;
 			action: string;
@@ -123,7 +133,13 @@ export class AuthApiService {
 			createdAt: string;
 		}>
 	> {
-		return this.http.get(`${this.base()}/audit/logs?limit=${limit}`, {
+		const q = new URLSearchParams();
+		q.set('limit', String(Math.min(500, Math.max(1, limit))));
+		if (filters?.action) q.set('action', filters.action);
+		if (filters?.agentSlug) q.set('agentSlug', filters.agentSlug);
+		if (filters?.runId) q.set('runId', filters.runId);
+		if (filters?.actorEmail) q.set('actorEmail', filters.actorEmail);
+		return this.http.get(`${this.base()}/audit/logs?${q}`, {
 			headers: this.tokens.getAuthHeader(),
 		}) as Observable<
 			Array<{

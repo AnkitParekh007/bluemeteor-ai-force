@@ -61,8 +61,31 @@ export class AgentAuditRepository {
 		}));
 	}
 
-	async listRecent(take: number): Promise<AuditLogEntry[]> {
+	async listRecent(
+		take: number,
+		filters?: {
+			readonly actionContains?: string;
+			readonly agentSlug?: string;
+			readonly runId?: string;
+			readonly actorEmailContains?: string;
+		},
+	): Promise<AuditLogEntry[]> {
+		const where: {
+			action?: { contains: string };
+			agentSlug?: string;
+			runId?: string;
+			actorEmail?: { contains: string };
+		} = {};
+		if (filters?.actionContains?.trim()) {
+			where.action = { contains: filters.actionContains.trim() };
+		}
+		if (filters?.agentSlug?.trim()) where.agentSlug = filters.agentSlug.trim();
+		if (filters?.runId?.trim()) where.runId = filters.runId.trim();
+		if (filters?.actorEmailContains?.trim()) {
+			where.actorEmail = { contains: filters.actorEmailContains.trim() };
+		}
 		const rows = await this.prisma.agentAuditLog.findMany({
+			where: Object.keys(where).length ? where : undefined,
 			orderBy: { createdAt: 'desc' },
 			take,
 		});

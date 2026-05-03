@@ -339,6 +339,21 @@ export class AgentOrchestratorClientService {
 					source: 'agent',
 				});
 				break;
+			case 'prompt_template_loaded':
+			case 'prompt_template_rendered':
+			case 'workflow_selected':
+			case 'workflow_step_started':
+			case 'workflow_step_completed':
+			case 'evaluation_run_started':
+			case 'evaluation_run_completed':
+				this.store.addRuntimeEvent(ev);
+				this.store.addConsoleEntry(sid, {
+					level: 'info',
+					message: `${ev.title}${ev.payload?.['workflowKey'] ? ` (${String(ev.payload['workflowKey'])})` : ''}`,
+					source: 'system',
+				});
+				this.store.expandToolPane('activity');
+				break;
 			case 'artifact_created':
 				this.store.addRuntimeEvent(ev);
 				this.api.getArtifacts(sid).subscribe({

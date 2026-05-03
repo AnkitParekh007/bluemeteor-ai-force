@@ -1,0 +1,37 @@
+# Example only — copy to bitbucket-pipelines.yml and adjust runners/images.
+# No secrets in repo; use Bitbucket repository variables.
+
+image: node:22-bookworm
+
+definitions:
+  steps:
+    - step: &frontend-build
+        name: Frontend build
+        caches: [npm]
+        script:
+          - cd .
+          - if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          - npm run build
+    - step: &backend-build
+        name: Backend build + Prisma validate
+        caches: [npm]
+        script:
+          - cd server
+          - if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          - npx prisma validate
+          - node scripts/sync-postgres-schema.mjs
+          - npx prisma validate --schema=prisma/postgres/schema.prisma
+          - npm run build
+    - step: &docker-build
+        name: Docker build (no push)
+        services:
+          - docker
+        script:
+          - docker compose build
+
+pipelines:
+  default:
+    - parallel:
+        - step: *frontend-build
+        - step: *backend-build
+    - step: *docker-build

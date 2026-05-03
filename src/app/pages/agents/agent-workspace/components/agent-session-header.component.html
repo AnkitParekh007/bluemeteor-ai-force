@@ -57,6 +57,17 @@
 						Approval
 					</span>
 				}
+				@if (traceId(); as tid) {
+					<button
+						type="button"
+						(click)="copyTraceId()"
+						class="inline-flex max-w-[min(100%,14rem)] items-center gap-1 truncate rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-mono text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300"
+						title="Copy trace ID for support"
+					>
+						<i class="pi pi-copy text-[10px]"></i>
+						<span class="truncate">{{ tid }}</span>
+					</button>
+				}
 			</div>
 			<p class="truncate text-xs text-violet-700 dark:text-violet-300">{{ ag.roleTitle }}</p>
 		</div>
@@ -111,6 +122,26 @@
 			<i class="pi pi-globe text-sm"></i>
 			<span class="hidden sm:inline">Browser</span>
 		</button>
+
+		<button
+			type="button"
+			(click)="openPilotSamples.emit()"
+			class="inline-flex h-8 items-center gap-1 rounded-lg border border-violet-200/70 px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-violet-50 dark:border-indigo-800 dark:text-slate-200 dark:hover:bg-slate-900"
+			title="Sample prompts for this agent"
+		>
+			<i class="pi pi-lightbulb text-sm"></i>
+			<span class="hidden sm:inline">Samples</span>
+		</button>
+
+		<a
+			[routerLink]="['/pilot/feedback']"
+			[queryParams]="pilotFeedbackQuery()"
+			class="inline-flex h-8 items-center gap-1 rounded-lg border border-violet-200/70 px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-violet-50 dark:border-indigo-800 dark:text-slate-200 dark:hover:bg-slate-900"
+			title="Submit pilot feedback"
+		>
+			<i class="pi pi-comment text-sm"></i>
+			<span class="hidden sm:inline">Feedback</span>
+		</a>
 
 		<button
 			type="button"

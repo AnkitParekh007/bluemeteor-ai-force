@@ -72,6 +72,7 @@ export function mapRun(
 		error: run.error ?? undefined,
 		actorUserId: run.actorUserId ?? undefined,
 		actorEmail: run.actorEmail ?? undefined,
+		traceId: run.traceId ?? undefined,
 	};
 }
 

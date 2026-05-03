@@ -1,0 +1,99 @@
+<section class="space-y-6 text-slate-800 dark:text-slate-100">
+	<p class="text-sm text-slate-600 dark:text-slate-400">
+		We inferred your pilot role as <strong class="text-slate-900 dark:text-white">{{ inferredRole() }}</strong>
+		from your profile — adjust it on the feedback form if needed.
+	</p>
+
+	<app-pilot-step-card
+		[step]="1"
+		title="Log in and confirm your role"
+		body="Use your company account. Check Settings if your job title or department should be updated for better defaults."
+	/>
+
+	<app-pilot-step-card
+		[step]="2"
+		title="Choose your primary agent"
+		body="Use the quick-launch card for your discipline below."
+	/>
+
+	<div class="grid gap-4 sm:grid-cols-2">
+		<app-pilot-role-card
+			roleLabel="Frontend engineer"
+			title="Fronto"
+			blurb="Components, UI review, accessibility, Tailwind/PrimeNG."
+			agentSlug="fronto"
+			agentName="Fronto"
+		/>
+		<app-pilot-role-card
+			roleLabel="Backend engineer"
+			title="Backo"
+			blurb="APIs, DTOs, NestJS services, validation."
+			agentSlug="backo"
+			agentName="Backo"
+		/>
+		<app-pilot-role-card
+			roleLabel="QA engineer"
+			title="Testo"
+			blurb="Regression plans, Playwright, browser smoke tests."
+			agentSlug="testo"
+			agentName="Testo"
+		/>
+		<app-pilot-role-card
+			roleLabel="Product manager"
+			title="Producto"
+			blurb="Stories, acceptance criteria, scope."
+			agentSlug="producto"
+			agentName="Producto"
+		/>
+		<app-pilot-role-card
+			roleLabel="Documentation owner"
+			title="Doco"
+			blurb="Release notes, onboarding, feature docs."
+			agentSlug="doco"
+			agentName="Doco"
+		/>
+		<app-pilot-role-card
+			roleLabel="Data analyst"
+			title="Dato"
+			blurb="SQL drafts, metrics definitions, data quality."
+			agentSlug="dato"
+			agentName="Dato"
+		/>
+		<app-pilot-role-card
+			roleLabel="Support agent"
+			title="Supporto"
+			blurb="Ticket summary, reply drafts, triage."
+			agentSlug="supporto"
+			agentName="Supporto"
+		/>
+		<app-pilot-role-card
+			roleLabel="DevOps engineer"
+			title="DevOpsy"
+			blurb="Release checklists, CI/CD review, rollback planning."
+			agentSlug="devopsy"
+			agentName="DevOpsy"
+		/>
+	</div>
+
+	<app-pilot-step-card
+		[step]="3"
+		title="Start a new session"
+		body="In the agent workspace, create a session and pick Ask / Plan / Act according to your permissions."
+	/>
+	<app-pilot-step-card
+		[step]="4"
+		title="Try one sample prompt"
+		body="Use the Samples button in the workspace header or a chip under the composer."
+	/>
+	<app-pilot-step-card
+		[step]="5"
+		title="Review output and artifacts"
+		body="Treat all generated material as draft until you have reviewed it."
+	/>
+	<app-pilot-step-card [step]="6" title="Submit feedback" body="Pilot → Feedback, or the Feedback button in the agent header." />
+
+	<div class="rounded-xl border border-amber-200 bg-amber-50/90 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-50">
+		<strong>Safe usage reminder:</strong> do not paste secrets; avoid production actions; verify outputs; use
+		approvals for risky actions; report incorrect or unsafe answers via feedback or support.
+	</div>
+</section>

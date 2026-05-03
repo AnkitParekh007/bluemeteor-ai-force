@@ -67,7 +67,7 @@ export class RbacService {
 			return true;
 		}
 		const entry = user.agentAccess.find((a) => a.agentSlug === agentSlug);
-		if (!entry) return min === 'view' && user.permissions.includes('agents.view');
+		if (!entry) return false;
 		return LEVEL_RANK[entry.accessLevel] >= LEVEL_RANK[min];
 	}
 }

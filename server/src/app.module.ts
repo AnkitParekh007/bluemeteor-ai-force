@@ -7,6 +7,7 @@ import { AppController } from './app.controller';
 import { AppConfigService } from './config/app-config.service';
 import { AgentCoreModule } from './agents/agent-core.module';
 import { AgentsModule } from './agents/agents.module';
+import { AgentIntelligenceModule } from './agent-intelligence/agent-intelligence.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from './auth/guards/permissions.guard';
@@ -18,10 +19,15 @@ import { TestingModule } from './testing/testing.module';
 import { InternalToolsModule } from './internal-tools/internal-tools.module';
 import { ConnectorsModule } from './connectors/connectors.module';
 import { ToolsModule } from './tools/tools.module';
+import { SecurityModule } from './security/security.module';
+import { ObservabilityModule } from './observability/observability.module';
+import { AdminModule } from './admin/admin.module';
+import { PilotModule } from './pilot/pilot.module';
 
 @Module({
 	imports: [
 		ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env'] }),
+		ProvidersModule,
 		DatabaseModule,
 		ThrottlerModule.forRootAsync({
 			imports: [ProvidersModule],
@@ -47,14 +53,18 @@ import { ToolsModule } from './tools/tools.module';
 					{
 						name: 'login',
 						ttl: 60_000,
-						limit: 30,
+						limit: 20,
+					},
+					{
+						name: 'stream',
+						ttl: 60_000,
+						limit: 120,
 					},
 				],
 			}),
 		}),
 		AuthModule,
 		AgentCoreModule,
-		ProvidersModule,
 		ToolsModule,
 		InternalToolsModule,
 		ConnectorsModule,
@@ -62,6 +72,11 @@ import { ToolsModule } from './tools/tools.module';
 		TestingModule,
 		RagModule,
 		AgentsModule,
+		AgentIntelligenceModule,
+		SecurityModule,
+		ObservabilityModule,
+		AdminModule,
+		PilotModule,
 	],
 	controllers: [AppController],
 	providers: [

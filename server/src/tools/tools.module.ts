@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 
+import { AgentIntelligenceModule } from '../agent-intelligence/agent-intelligence.module';
 import { AgentsModule } from '../agents/agents.module';
 import { AgentCoreModule } from '../agents/agent-core.module';
 import { AuthModule } from '../auth/auth.module';
@@ -18,10 +19,11 @@ import { ToolRegistryService } from './services/tool-registry.service';
 		AgentCoreModule,
 		AuthModule,
 		forwardRef(() => AgentsModule),
-		BrowserModule,
+		forwardRef(() => BrowserModule),
 		TestingModule,
 		InternalToolsModule,
 		ConnectorsModule,
+		forwardRef(() => AgentIntelligenceModule),
 	],
 	controllers: [ToolsController],
 	providers: [ToolRegistryService, ToolPermissionService, ToolExecutionRepository, ToolExecutorService],

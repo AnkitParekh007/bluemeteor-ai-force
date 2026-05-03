@@ -30,6 +30,7 @@ export class AgentRunRepository {
 		updatedAt: Date;
 		actorUserId?: string | null;
 		actorEmail?: string | null;
+		traceId?: string | null;
 	}): Promise<AgentRun> {
 		const row = await this.prisma.agentRun.create({
 			data: {
@@ -41,6 +42,7 @@ export class AgentRunRepository {
 				userMessage: params.userMessage,
 				actorUserId: params.actorUserId ?? null,
 				actorEmail: params.actorEmail ?? null,
+				traceId: params.traceId ?? null,
 				createdAt: params.createdAt,
 				updatedAt: params.updatedAt,
 			},

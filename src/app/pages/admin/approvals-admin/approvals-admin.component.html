@@ -1,0 +1,90 @@
+<div class="mx-auto max-w-6xl space-y-4">
+	<app-admin-section-header
+		title="Approval center"
+		subtitle="Pending and recent approvals. Payloads are truncated server-side."
+	/>
+
+	<div class="flex flex-wrap items-center gap-2 text-sm">
+		<label>
+			Status
+			<select
+				class="ml-1 rounded border px-2 py-1 dark:bg-slate-900"
+				[ngModel]="filterStatus()"
+				(ngModelChange)="filterStatus.set($event); reload()"
+			>
+				<option value="">All</option>
+				<option value="pending">pending</option>
+				<option value="approved">approved</option>
+				<option value="rejected">rejected</option>
+			</select>
+		</label>
+		<p-button label="Refresh" icon="pi pi-refresh" size="small" [outlined]="true" (onClick)="reload()" />
+	</div>
+
+	<div class="overflow-x-auto rounded-lg border dark:border-slate-700">
+		<table class="w-full min-w-[960px] text-left text-xs">
+			<thead class="bg-slate-100/80 dark:bg-slate-800/80">
+				<tr>
+					<th class="px-2 py-2">Created</th>
+					<th class="px-2 py-2">Agent</th>
+					<th class="px-2 py-2">Risk</th>
+					<th class="px-2 py-2">Status</th>
+					<th class="px-2 py-2">Title</th>
+					<th class="px-2 py-2 text-right">Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (r of rows(); track r.id) {
+					<tr class="border-t border-slate-200/70 dark:border-slate-700">
+						<td class="px-2 py-1.5 whitespace-nowrap">{{ r.createdAt | date: 'medium' }}</td>
+						<td class="px-2 py-1.5">
+							<div>{{ r.agentSlug }}</div>
+							<div class="font-mono text-[10px] text-slate-500">{{ r.traceId || r.runId }}</div>
+						</td>
+						<td class="px-2 py-1.5">
+							@if (r.riskLevel) {
+								<app-admin-risk-badge [risk]="r.riskLevel" />
+							} @else {
+								—
+							}
+						</td>
+						<td class="px-2 py-1.5">{{ r.status }}</td>
+						<td class="px-2 py-1.5">{{ r.title || r.actionType || '—' }}</td>
+						<td class="px-2 py-1.5 text-right">
+							@if (highRisk(r)) {
+								<div class="mb-1 text-[10px] font-semibold text-amber-800 dark:text-amber-200">
+									High / critical — review carefully
+								</div>
+							}
+							<div class="flex flex-wrap justify-end gap-1">
+								<p-button label="Payload" size="small" [outlined]="true" (onClick)="showPayload(r)" />
+								<a
+									[routerLink]="['/agents', r.agentSlug]"
+									[queryParams]="{ session: r.sessionId }"
+									class="rounded border px-2 py-0.5 text-[11px] dark:border-slate-600"
+									>Workspace</a
+								>
+								@if (r.status === 'pending' && auth.canApproveTools()) {
+									<p-button label="Approve" size="small" (onClick)="approve(r)" />
+									<p-button label="Reject" size="small" severity="danger" [outlined]="true" (onClick)="reject(r)" />
+								}
+							</div>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+
+	<p-dialog
+		[visible]="payload() !== null"
+		(visibleChange)="!$event && payload.set(null)"
+		header="Payload preview"
+		[modal]="true"
+		[style]="{ width: 'min(720px, 95vw)' }"
+	>
+		@if (payload(); as p) {
+			<pre class="max-h-[60vh] overflow-auto whitespace-pre-wrap text-xs">{{ p.payloadPreview }}</pre>
+		}
+	</p-dialog>
+</div>

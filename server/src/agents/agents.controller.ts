@@ -6,12 +6,14 @@ import {
 	NotFoundException,
 	Param,
 	Post,
+	Query,
 	Sse,
+	UnauthorizedException,
 	UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { from, throwError, type Observable } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { from, type Observable } from 'rxjs';
+import { finalize, map, mergeMap } from 'rxjs/operators';
 
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SendMessageDto } from './dto/send-message.dto';
@@ -24,6 +26,7 @@ import { AgentConfigRegistryService } from './services/agent-config-registry.ser
 import { AgentEventBusService } from './services/agent-event-bus.service';
 import type { AgentSendResponsePayload, StreamStartPayload } from './services/agent-orchestrator.service';
 import { AgentOrchestratorService } from './services/agent-orchestrator.service';
+import { AgentStreamTokenService } from './services/agent-stream-token.service';
 import { AgentRuntimeHealthService } from './services/agent-runtime-health.service';
 import { AgentRunService } from './services/agent-run.service';
 import { AgentSessionService } from './services/agent-session.service';
@@ -31,17 +34,30 @@ import { BrowserSessionService } from '../browser/services/browser-session.servi
 import { BrowserSnapshotRepository } from '../browser/repositories/browser-snapshot.repository';
 import { ToolExecutorService } from '../tools/services/tool-executor.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { RequireAgentAccess } from '../auth/decorators/require-agent-access.decorator';
+import {
+	RequireRunAccess,
+	RequireSessionAccess,
+} from '../auth/decorators/require-session-access.decorator';
 import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
 import { AgentAccessGuard } from '../auth/guards/agent-access.guard';
+import { SessionAccessGuard } from '../auth/guards/session-access.guard';
 import type { AuthUser } from '../auth/models/auth-user.model';
 import { RbacService } from '../auth/services/rbac.service';
 import { isoNow } from '../common/utils/dates';
 import { newId } from '../common/utils/ids';
+import { RuntimeMetricsService } from '../observability/services/runtime-metrics.service';
 
 /** Nest SSE adapter expects message-like events with a `data` string. */
 interface SseDataEvent {
 	readonly data: string;
+}
+
+/** Client response for stream-start (includes signed SSE URL). */
+export interface AgentStreamStartResponseDto extends StreamStartPayload {
+	readonly streamUrl: string;
+	readonly streamTokenExpiresAt: string;
 }
 
 @Controller('agents')
@@ -60,6 +76,8 @@ export class AgentsController {
 		private readonly browserSnapshots: BrowserSnapshotRepository,
 		private readonly toolExecutor: ToolExecutorService,
 		private readonly rbac: RbacService,
+		private readonly streamTokens: AgentStreamTokenService,
+		private readonly runtimeMetrics: RuntimeMetricsService,
 	) {}
 
 	@Get('runtime/health')
@@ -86,18 +104,24 @@ export class AgentsController {
 	}
 
 	@Get('runs/:runId')
+	@UseGuards(SessionAccessGuard)
+	@RequireRunAccess('view')
 	@RequirePermissions('agents.view')
 	async getRun(@Param('runId') runId: string) {
 		return this.runs.getRun(runId);
 	}
 
 	@Get('sessions/:sessionId')
+	@UseGuards(SessionAccessGuard)
+	@RequireSessionAccess('view')
 	@RequirePermissions('agents.view')
 	async getSession(@Param('sessionId') sessionId: string) {
 		return this.sessions.getSession(sessionId);
 	}
 
 	@Get('sessions/:sessionId/browser')
+	@UseGuards(SessionAccessGuard)
+	@RequireSessionAccess('view')
 	@RequirePermissions('browser.view')
 	async browserWorkspace(@Param('sessionId') sessionId: string) {
 		const sessions = await this.browserSessions.listBrowserSessions(sessionId);
@@ -110,15 +134,18 @@ export class AgentsController {
 	}
 
 	@Get('sessions/:sessionId/messages')
+	@UseGuards(SessionAccessGuard)
+	@RequireSessionAccess('view')
 	@RequirePermissions('agents.view')
 	async listMessages(@Param('sessionId') sessionId: string) {
 		return this.sessions.listMessages(sessionId);
 	}
 
 	@Post('sessions/:sessionId/messages')
-	@Throttle({ agent: { limit: 30, ttl: 60_000 } })
+	@Throttle({ agent: { limit: 20, ttl: 60_000 } })
+	@UseGuards(SessionAccessGuard, AgentAccessGuard)
+	@RequireSessionAccess('use')
 	@RequirePermissions('agents.use')
-	@UseGuards(AgentAccessGuard)
 	@RequireAgentAccess('use')
 	async sendMessage(
 		@CurrentUser() user: AuthUser,
@@ -144,19 +171,21 @@ export class AgentsController {
 			context: dto.context,
 			actorUserId: user.id,
 			actorEmail: user.email,
+			actorRoles: user.roles,
 		});
 	}
 
 	@Post('sessions/:sessionId/messages/stream-start')
-	@Throttle({ agent: { limit: 30, ttl: 60_000 } })
+	@Throttle({ agent: { limit: 20, ttl: 60_000 } })
+	@UseGuards(SessionAccessGuard, AgentAccessGuard)
+	@RequireSessionAccess('use')
 	@RequirePermissions('agents.use')
-	@UseGuards(AgentAccessGuard)
 	@RequireAgentAccess('use')
 	async startMessageStream(
 		@CurrentUser() user: AuthUser,
 		@Param('sessionId') sessionId: string,
 		@Body() dto: SendMessageDto,
-	): Promise<StreamStartPayload> {
+	): Promise<AgentStreamStartResponseDto> {
 		if (dto.mode === 'act' && !this.rbac.canAccessAgent(user, dto.agentSlug, 'act')) {
 			throw new ForbiddenException('Act mode not permitted for this agent');
 		}
@@ -168,33 +197,63 @@ export class AgentsController {
 			action: 'stream_start_requested',
 			details: { mode: dto.mode },
 		});
-		return this.orchestrator.startStreamingMessage({
+		const start = await this.orchestrator.startStreamingMessage({
 			sessionId,
 			agentSlug: dto.agentSlug,
 			mode: dto.mode,
 			message: dto.message,
 			context: dto.context,
+			actorUserId: user.id,
+			actorEmail: user.email,
+			actorRoles: user.roles,
 		});
+		const { token, expiresAt } = await this.streamTokens.createStreamToken({
+			userId: user.id,
+			sessionId,
+			runId: start.runId,
+			agentSlug: dto.agentSlug,
+		});
+		const streamUrl = `/agents/sessions/${encodeURIComponent(sessionId)}/runs/${encodeURIComponent(start.runId)}/events?streamToken=${encodeURIComponent(token)}`;
+		return {
+			...start,
+			streamUrl,
+			streamTokenExpiresAt: expiresAt,
+		};
 	}
 
+	@Public()
 	@Sse('sessions/:sessionId/runs/:runId/events')
-	@RequirePermissions('agents.view')
+	@Throttle({ stream: { limit: 120, ttl: 60_000 } })
 	streamRunEvents(
 		@Param('sessionId') sessionId: string,
 		@Param('runId') runId: string,
+		@Query('streamToken') streamToken: string | undefined,
 	): Observable<SseDataEvent> {
-		return from(this.runs.getRun(runId)).pipe(
-			switchMap((run) => {
-				if (run.sessionId !== sessionId) {
-					return throwError(() => new NotFoundException('Run not found for session'));
+		return from(
+			(async (): Promise<Observable<SseDataEvent>> => {
+				const claims = await this.streamTokens.verifyStreamToken(streamToken);
+				await this.streamTokens.assertTokenMatchesRun(claims, sessionId, runId);
+				const user = await this.rbac.loadAuthUser(claims.userId);
+				if (!user) throw new UnauthorizedException();
+				if (!this.rbac.canAccessAgent(user, claims.agentSlug, 'use')) {
+					throw new ForbiddenException('Agent access denied');
 				}
-				return this.events.sseForRun(runId);
-			}),
-			map((e) => ({ data: JSON.stringify(e) })),
-		);
+				const run = await this.runs.getRun(runId);
+				if (run.sessionId !== sessionId) {
+					throw new NotFoundException('Run not found for session');
+				}
+				this.runtimeMetrics.recordSseOpen();
+				return this.events.sseForRun(runId).pipe(
+					map((e) => ({ data: JSON.stringify(e) })),
+					finalize(() => this.runtimeMetrics.recordSseClose()),
+				);
+			})(),
+		).pipe(mergeMap((obs) => obs));
 	}
 
 	@Post('sessions/:sessionId/runs/:runId/approvals/:approvalId')
+	@UseGuards(SessionAccessGuard)
+	@RequireSessionAccess('use')
 	@RequirePermissions('tools.approve')
 	async submitApproval(
 		@CurrentUser() user: AuthUser,
@@ -231,12 +290,16 @@ export class AgentsController {
 	}
 
 	@Get('sessions/:sessionId/artifacts')
+	@UseGuards(SessionAccessGuard)
+	@RequireSessionAccess('view')
 	@RequirePermissions('agents.view')
 	async listArtifacts(@Param('sessionId') sessionId: string) {
 		return this.artifacts.listArtifacts(sessionId);
 	}
 
 	@Get('sessions/:sessionId/activity')
+	@UseGuards(SessionAccessGuard)
+	@RequireSessionAccess('view')
 	@RequirePermissions('agents.view')
 	async activity(@Param('sessionId') sessionId: string) {
 		return this.events.listEvents(sessionId);

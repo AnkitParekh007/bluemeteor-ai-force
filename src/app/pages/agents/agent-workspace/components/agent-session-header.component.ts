@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import type { AgentRun } from '../../../../core/models/agent-runtime.models';
@@ -32,6 +32,7 @@ export class AgentSessionHeaderComponent {
 	readonly toggleRightPanel = output<void>();
 	readonly openBrowser = output<void>();
 	readonly renameSession = output<void>();
+	readonly openPilotSamples = output<void>();
 
 	protected readonly modes: { value: AgentWorkspaceMode; label: string }[] = [
 		{ value: 'ask', label: 'Ask' },
@@ -47,4 +48,25 @@ export class AgentSessionHeaderComponent {
 		const r = this.activeRun();
 		return r?.status ?? '';
 	}
+
+	protected traceId(): string | null {
+		const t = this.activeRun()?.traceId;
+		return t && t.length > 0 ? t : null;
+	}
+
+	protected copyTraceId(): void {
+		const t = this.traceId();
+		if (t) void navigator.clipboard?.writeText?.(t);
+	}
+
+	protected readonly pilotFeedbackQuery = computed(() => {
+		const q: Record<string, string> = { agentSlug: this.agent().slug };
+		const sid = this.activeSession()?.id;
+		const rid = this.activeRun()?.id;
+		const tid = this.activeRun()?.traceId;
+		if (sid) q['sessionId'] = sid;
+		if (rid) q['runId'] = rid;
+		if (tid) q['traceId'] = tid;
+		return q;
+	});
 }

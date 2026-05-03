@@ -1,5 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 
+import { AuthModule } from '../auth/auth.module';
+import { ToolsModule } from '../tools/tools.module';
 import { BrowserController } from './browser.controller';
 import { BrowserActionRepository } from './repositories/browser-action.repository';
 import { BrowserAuthCaptureRepository } from './repositories/browser-auth-capture.repository';
@@ -12,6 +14,7 @@ import { BrowserSessionService } from './services/browser-session.service';
 import { BrowserWorkerService } from './services/browser-worker.service';
 
 @Module({
+	imports: [AuthModule, forwardRef(() => ToolsModule)],
 	controllers: [BrowserController],
 	providers: [
 		BrowserSessionRepository,

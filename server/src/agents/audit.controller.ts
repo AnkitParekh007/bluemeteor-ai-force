@@ -9,8 +9,19 @@ export class AuditController {
 
 	@Get('logs')
 	@RequirePermissions('audit.view')
-	listLogs(@Query('limit') limit?: string) {
+	listLogs(
+		@Query('limit') limit?: string,
+		@Query('action') action?: string,
+		@Query('agentSlug') agentSlug?: string,
+		@Query('runId') runId?: string,
+		@Query('actorEmail') actorEmail?: string,
+	) {
 		const n = Math.min(500, Math.max(1, Number(limit ?? '200') || 200));
-		return this.audit.listRecent(n);
+		return this.audit.listRecent(n, {
+			actionContains: action,
+			agentSlug,
+			runId,
+			actorEmailContains: actorEmail,
+		});
 	}
 }

@@ -1,6 +1,6 @@
 # Bluemeteor AI Force — Agent orchestrator (NestJS)
 
-NestJS backend for the Angular agent workspace: **Prisma + SQLite** persistence, multi-provider LLM routing (mock / OpenAI / Anthropic / local Ollama), **SSE** runtime streaming, RAG foundation, and mock browser/test hooks.
+NestJS backend for the Angular agent workspace: **Prisma** persistence (**SQLite** for local dev, **PostgreSQL** for pilot/Docker), multi-provider LLM routing (mock / OpenAI / Anthropic / local Ollama), **SSE** runtime streaming, RAG foundation, and browser/test workers.
 
 ## Install
 
@@ -11,20 +11,38 @@ npm install
 
 ## Database (Prisma)
 
-1. Copy `.env.example` to `.env` and set at least `DATABASE_URL` (default: `file:./dev.db`).
-2. Generate client and apply migrations:
+### SQLite (local)
 
-```bash
-npx prisma generate
-npx prisma migrate dev --name your_migration_name
-```
+1. Copy `.env.example` to `.env` — default `DATABASE_PROVIDER=sqlite`, `DATABASE_URL="file:./dev.db"`.
+2. `npx prisma generate && npx prisma db push` to sync the schema.
 
-Useful:
+Useful: `npm run prisma:studio`, `npm run prisma:generate`, `npm run db:health`, `npm run db:seed` (after `npm run build`).
 
-- `npm run prisma:studio` — browse SQLite data
-- `npm run prisma:generate` — client only
+### PostgreSQL (Docker / pilot)
 
-The schema is SQLite-friendly and can be switched to PostgreSQL later (change `datasource` in `prisma/schema.prisma` and `DATABASE_URL`).
+- Source schema: `prisma/schema.prisma` (SQLite). Synced Postgres schema: `node scripts/sync-postgres-schema.mjs` → `prisma/postgres/schema.prisma`.
+- Migrations: `prisma/postgres/migrations` — `npm run prisma:migrate:deploy`
+- Docker entrypoint runs `prisma migrate deploy` when `DATABASE_URL` is postgres.
+
+See `docs/database-operations.md` and `docs/deployment-guide.md`.
+
+## Agent intelligence API
+
+REST surface under `/agent-intelligence` (JWT + RBAC):
+
+| Area | Examples |
+|------|-----------|
+| Prompts | `GET/POST /agent-intelligence/prompts`, `POST …/prompts/render`, `POST …/:id/activate` |
+| Skill packs | `GET/POST /agent-intelligence/skill-packs`, `POST …/:id/activate` |
+| Workflows | `GET/POST /agent-intelligence/workflows`, `POST …/match` |
+| Evaluations | `GET …/evaluations/cases`, `POST …/evaluations/run`, `GET …/evaluations/readiness/:agentSlug` |
+
+- **Read** endpoints: `agents.readiness.view`
+- **Write** endpoints: `agents.manage`
+
+On first boot with an empty `agent_prompt_templates` table, `AgentIntelligenceSeedService` seeds prompts, workflows, skill packs, and golden evaluation cases for the eight priority agents (disable with `AGENT_INTEL_SEED=0`).
+
+**Evaluations** call the real orchestrator in `plan` mode with `context.evaluation` and skip blocklisted browser/Playwright/MCP/deploy/database tools unless options explicitly allow them.
 
 ## Run
 
@@ -42,7 +60,13 @@ Default URL: `http://localhost:3000` (`PORT` in `.env`).
 |----------|-------------|
 | `PORT` | HTTP port (default `3000`) |
 | `NODE_ENV` | `development` \| `production` |
-| `DATABASE_URL` | e.g. `file:./dev.db` (SQLite) |
+| `DATABASE_PROVIDER` | `sqlite` (default) or `postgresql` |
+| `DATABASE_URL` | SQLite `file:./dev.db` or Postgres URL |
+| `STORAGE_ROOT` | Root for generated assets (default `storage`; `/data/storage` in Docker) |
+| `API_GLOBAL_PREFIX` | Optional Nest global prefix (`health` / `live` / `ready` stay at root) |
+| `ENABLE_METRICS` | `GET /metrics` (default on; set `false` to 404) |
+| `METRICS_PUBLIC` | `true` allows `/metrics` without JWT (default `false`) |
+| `STRUCTURED_LOGGING` | JSON request logs when `true` or in production |
 | `AGENT_PROVIDER` | `mock` (default), `openai`, `anthropic`, `local` |
 | `AGENT_STREAMING_ENABLED` | `true` (default) — surfaced on health endpoints |
 | `ALLOW_PROVIDER_FALLBACK` / `AGENT_ALLOW_PROVIDER_FALLBACK` | In **development**, fall back to mock if the selected provider is misconfigured |

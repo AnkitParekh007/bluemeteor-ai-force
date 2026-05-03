@@ -410,7 +410,16 @@ export class ToolExecutorService {
 	}
 
 	private async runBrowser(req: ToolExecutionRequest, forceApproved: boolean): Promise<{ output: Record<string, unknown> }> {
-		const bs = await this.browserSessions.getOrCreateActiveSession(req.sessionId, req.runId, req.agentSlug);
+		let bs =
+			req.targetBrowserSessionId != null
+				? await this.browserSessions.getBrowserSession(req.targetBrowserSessionId)
+				: null;
+		if (req.targetBrowserSessionId != null && !bs) {
+			throw new Error('Browser session not found');
+		}
+		if (!bs) {
+			bs = await this.browserSessions.getOrCreateActiveSession(req.sessionId, req.runId, req.agentSlug);
+		}
 		await this.browserWorker.ensureBrowserSession(bs);
 
 		switch (req.toolId) {

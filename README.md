@@ -1,8 +1,35 @@
-# BluemeteorAiForce
+# Bluemeteor AI Force
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.9.
+Internal **Angular 21** agent workspace + **NestJS** orchestrator (Prisma, SSE, RAG, tools, connectors, browser/test workers). See `server/README.md` for API detail.
 
-## Development server
+## Docker pilot (PostgreSQL + nginx)
+
+1. Copy `.env.docker.example` → `.env` (repo root) and set secrets.
+2. `docker compose up --build`
+3. App: `http://localhost:8080` — API proxied at `/api`.
+
+Docs: [`docs/deployment-guide.md`](docs/deployment-guide.md), [`docs/database-operations.md`](docs/database-operations.md), [`docs/observability.md`](docs/observability.md).
+
+## Admin Console
+
+Leads and admins can operate the platform from **`/admin`** (overview, agents, users, tools, connectors, MCP, prompts, skill packs, workflows, evaluations, approvals, audit, ops, readiness). The console is permission-gated and does not show secrets or raw credentials. See [`docs/admin-console-guide.md`](docs/admin-console-guide.md) and [`docs/internal-pilot-readiness.md`](docs/internal-pilot-readiness.md).
+
+## Internal pilot hub
+
+Controlled internal pilot UX lives at **`/pilot`** (all authenticated users): overview, onboarding, agent guides, demo scripts, feedback form, known limitations, and support/escalation templates.
+
+- **Metrics:** `/pilot/metrics` — `system.debug.view` or `system.admin`.
+- **Readiness gate & report:** `/pilot/readiness` — `system.debug.view`, `agents.readiness.view`, or `system.admin`.
+- **Feedback API:** `POST /pilot/feedback` (authenticated); listing `GET /pilot/feedback` is admin/debug only.
+
+Docs: [`docs/internal-pilot-launch-plan.md`](docs/internal-pilot-launch-plan.md), [`docs/pilot-user-guide.md`](docs/pilot-user-guide.md), [`docs/pilot-admin-guide.md`](docs/pilot-admin-guide.md), [`docs/pilot-demo-script.md`](docs/pilot-demo-script.md), [`docs/pilot-sample-prompts.md`](docs/pilot-sample-prompts.md), [`docs/pilot-success-metrics.md`](docs/pilot-success-metrics.md).
+
+## Local development
+
+- Frontend: `ng serve` → `http://localhost:4200`
+- Backend: `cd server && npm run start:dev` — default SQLite `file:./dev.db`
+
+## Development server (Angular CLI)
 
 To start a local development server, run:
 

@@ -17,14 +17,14 @@ export class AuthController {
 	constructor(private readonly auth: AuthService) {}
 
 	@Public()
-	@Throttle({ login: { limit: 30, ttl: 60_000 } })
+	@Throttle({ login: { limit: 12, ttl: 60_000 } })
 	@Post('login')
 	login(@Body() dto: LoginDto) {
 		return this.auth.login(dto);
 	}
 
 	@Public()
-	@Throttle({ login: { limit: 60, ttl: 60_000 } })
+	@Throttle({ login: { limit: 30, ttl: 60_000 } })
 	@Post('refresh')
 	refresh(@Body() dto: RefreshTokenDto) {
 		return this.auth.refresh(dto.refreshToken);

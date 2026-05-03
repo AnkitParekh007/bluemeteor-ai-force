@@ -108,6 +108,15 @@ export class AuthStore {
 		return u.permissions.includes(key);
 	}
 
+	/** True if the user has any of the given permissions (or `system.admin`). */
+	hasAnyPermission(...keys: string[]): boolean {
+		if (environment.enableMockAgents) return true;
+		const u = this.user();
+		if (!u) return false;
+		if (u.permissions.includes('system.admin')) return true;
+		return keys.some((k) => u.permissions.includes(k));
+	}
+
 	hasRole(role: string): boolean {
 		if (environment.enableMockAgents) return true;
 		return this.user()?.roles.includes(role) ?? false;
@@ -118,9 +127,7 @@ export class AuthStore {
 		if (!u) return environment.enableMockAgents;
 		if (u.permissions.includes('system.admin') || u.permissions.includes('agents.manage')) return true;
 		const row = u.agentAccess.find((a) => a.agentSlug === agentSlug);
-		if (!row) {
-			return min === 'view' && u.permissions.includes('agents.view');
-		}
+		if (!row) return false;
 		return LEVEL_RANK[row.accessLevel as AgentAccessLevel] >= LEVEL_RANK[min];
 	}
 

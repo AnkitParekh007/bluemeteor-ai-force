@@ -94,12 +94,21 @@ export class UserRepository {
 			department: string | null;
 			jobTitle: string | null;
 			createdAt: Date;
+			lastLoginAt: Date | null;
 			userRoles: Array<{ role: { key: string; name: string } }>;
 		}>
 	> {
 		return this.prisma.user.findMany({
 			orderBy: { createdAt: 'desc' },
-			include: {
+			select: {
+				id: true,
+				email: true,
+				name: true,
+				status: true,
+				department: true,
+				jobTitle: true,
+				createdAt: true,
+				lastLoginAt: true,
 				userRoles: { include: { role: { select: { key: true, name: true } } } },
 			},
 		});

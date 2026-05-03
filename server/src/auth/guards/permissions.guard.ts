@@ -7,7 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 
 import { AppConfigService } from '../../config/app-config.service';
-import { PERMISSIONS_KEY } from '../auth.constants';
+import { IS_PUBLIC_KEY, PERMISSIONS_KEY } from '../auth.constants';
 import type { AuthUser } from '../models/auth-user.model';
 import { RbacService } from '../services/rbac.service';
 
@@ -21,6 +21,11 @@ export class PermissionsGuard implements CanActivate {
 
 	canActivate(context: ExecutionContext): boolean {
 		if (!this.cfg.enableRbac) return true;
+		const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+			context.getHandler(),
+			context.getClass(),
+		]);
+		if (isPublic) return true;
 		const required = this.reflector.getAllAndOverride<string[]>(PERMISSIONS_KEY, [
 			context.getHandler(),
 			context.getClass(),
