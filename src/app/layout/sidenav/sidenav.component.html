@@ -1,0 +1,58 @@
+<aside
+  class="relative z-20 flex h-full shrink-0 flex-col overflow-hidden border-r border-violet-200/45 bg-white/95 backdrop-blur-sm transition-[width] duration-200 ease-out dark:border-indigo-900/70 dark:bg-slate-950/95"
+  [style.width]="expanded() ? '14rem' : '4.5rem'"
+  (mouseenter)="onEnter()"
+  (mouseleave)="onLeave()"
+  aria-label="Primary navigation"
+>
+  <nav class="flex flex-1 flex-col gap-1 px-2 py-3">
+    @for (item of items(); track item.label) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="bg-cyan-50 text-cyan-900 shadow-sm shadow-cyan-500/10 ring-1 ring-cyan-500/15 dark:bg-cyan-950/45 dark:text-cyan-100 dark:shadow-cyan-900/25 dark:ring-cyan-400/20"
+        [routerLinkActiveOptions]="{ exact: item.linkExact }"
+        class="flex items-center gap-3 rounded-xl px-2.5 py-2.5 text-sm font-medium text-slate-600 outline-none transition-colors hover:bg-violet-50 hover:text-indigo-900 dark:text-slate-400 dark:hover:bg-indigo-950/60 dark:hover:text-slate-100"
+        [title]="item.label"
+      >
+        <span
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-700 ring-1 ring-violet-200/70 dark:bg-indigo-950 dark:text-cyan-300/90 dark:ring-indigo-800/80"
+        >
+          <i [class]="item.icon + ' text-base leading-none'"></i>
+        </span>
+        @if (expanded()) {
+          <span class="truncate">{{ item.label }}</span>
+        }
+      </a>
+    }
+  </nav>
+
+  <div
+    class="mt-auto border-t border-violet-200/50 px-2 py-2 dark:border-indigo-900/70"
+  >
+    <button
+      type="button"
+      (click)="togglePinned($event)"
+      class="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left text-sm font-medium text-slate-500 outline-none transition-colors hover:bg-violet-50 hover:text-indigo-900 dark:text-slate-500 dark:hover:bg-indigo-950/50 dark:hover:text-slate-200"
+      [title]="
+        pinnedOpen() ? 'Unpin sidebar (hover to expand)' : 'Pin sidebar open'
+      "
+      [attr.aria-pressed]="pinnedOpen()"
+    >
+      <span
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 ring-1 ring-violet-200/70 dark:bg-indigo-950 dark:ring-indigo-800/80"
+      >
+        <i
+          [class]="
+            (pinnedOpen() ? 'pi pi-lock ' : 'pi pi-angle-double-right ') +
+            'text-[0.95rem] leading-none text-slate-600 dark:text-slate-400'
+          "
+        ></i>
+      </span>
+      @if (expanded()) {
+        <span class="truncate">{{
+          pinnedOpen() ? 'Pinned open' : 'Pin sidebar'
+        }}</span>
+      }
+    </button>
+  </div>
+</aside>

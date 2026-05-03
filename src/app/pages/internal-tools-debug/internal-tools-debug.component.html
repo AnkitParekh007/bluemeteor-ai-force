@@ -1,0 +1,94 @@
+<div class="mx-auto max-w-4xl space-y-6 p-6 text-slate-800 dark:text-slate-100">
+	<div>
+		<h1 class="text-xl font-semibold text-slate-900 dark:text-white">Internal tools debug</h1>
+		<p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+			Read-only hub health and smoke tests. Requires
+			<code class="rounded bg-slate-100 px-1 dark:bg-slate-800">tools.view</code>.
+		</p>
+	</div>
+
+	<div class="flex flex-wrap gap-2">
+		<button
+			type="button"
+			(click)="refresh()"
+			class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-500"
+		>
+			Refresh health
+		</button>
+		<button
+			type="button"
+			(click)="test('/internal-tools/repository/search?q=angular')"
+			class="rounded-lg border border-violet-300 px-3 py-2 text-sm font-medium dark:border-indigo-700"
+		>
+			Repo search
+		</button>
+		<button
+			type="button"
+			(click)="test('/internal-tools/docs/search?q=supplier')"
+			class="rounded-lg border border-violet-300 px-3 py-2 text-sm font-medium dark:border-indigo-700"
+		>
+			Docs search
+		</button>
+		<button
+			type="button"
+			(click)="test('/internal-tools/tickets/search?q=upload')"
+			class="rounded-lg border border-violet-300 px-3 py-2 text-sm font-medium dark:border-indigo-700"
+		>
+			Tickets search
+		</button>
+		<button
+			type="button"
+			(click)="test('/internal-tools/api-catalog/search?q=supplier')"
+			class="rounded-lg border border-violet-300 px-3 py-2 text-sm font-medium dark:border-indigo-700"
+		>
+			API search
+		</button>
+		<button
+			type="button"
+			(click)="test('/internal-tools/database-schema/search?q=upload')"
+			class="rounded-lg border border-violet-300 px-3 py-2 text-sm font-medium dark:border-indigo-700"
+		>
+			Schema search
+		</button>
+		<button
+			type="button"
+			(click)="test('/internal-tools/cicd/analyze')"
+			class="rounded-lg border border-violet-300 px-3 py-2 text-sm font-medium dark:border-indigo-700"
+		>
+			CI/CD analyze
+		</button>
+	</div>
+
+	@if (loading()) {
+		<p class="text-sm text-slate-500">Loading…</p>
+	}
+	@if (error(); as err) {
+		<div
+			class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200"
+		>
+			{{ err }}
+		</div>
+	}
+
+	@if (health(); as h) {
+		<div
+			class="rounded-xl border border-violet-200/70 bg-white/90 p-4 shadow-sm dark:border-indigo-800 dark:bg-slate-900/80"
+		>
+			<h2 class="text-sm font-semibold text-slate-900 dark:text-white">Health</h2>
+			<pre class="mt-2 max-h-48 overflow-auto text-xs text-slate-600 dark:text-slate-300">{{
+				h | json
+			}}</pre>
+		</div>
+	}
+
+	@if (lastResult(); as r) {
+		<div
+			class="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/80"
+		>
+			<h2 class="text-sm font-semibold text-slate-900 dark:text-white">Last response</h2>
+			<pre class="mt-2 max-h-96 overflow-auto text-xs text-slate-600 dark:text-slate-300">{{
+				r | json
+			}}</pre>
+		</div>
+	}
+</div>

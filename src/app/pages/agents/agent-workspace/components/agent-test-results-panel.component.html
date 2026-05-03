@@ -1,0 +1,87 @@
+@let r = results();
+@let s = summary();
+
+<div class="flex h-full min-h-0 flex-col">
+	@if (r.length === 0) {
+		<div class="flex flex-1 flex-col items-center justify-center gap-2 px-4 py-10 text-center">
+			<i class="pi pi-list-check text-2xl text-slate-400"></i>
+			<p class="text-sm font-medium text-slate-700 dark:text-slate-300">No test run yet</p>
+			<p class="max-w-xs text-xs text-slate-500 dark:text-slate-500">
+				Ask Testo to generate or run a test plan.
+			</p>
+		</div>
+	} @else {
+		<div
+			class="grid shrink-0 grid-cols-2 gap-2 border-b border-slate-200/70 p-2 sm:grid-cols-4 dark:border-slate-800"
+		>
+			<div class="rounded-lg bg-emerald-50 px-2 py-1.5 text-center dark:bg-emerald-950/40">
+				<div class="text-lg font-bold text-emerald-800 dark:text-emerald-200">
+					{{ s.passed }}
+				</div>
+				<div
+					class="text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-300"
+				>
+					Passed
+				</div>
+			</div>
+			<div class="rounded-lg bg-red-50 px-2 py-1.5 text-center dark:bg-red-950/40">
+				<div class="text-lg font-bold text-red-800 dark:text-red-200">{{ s.failed }}</div>
+				<div class="text-[10px] font-semibold uppercase text-red-700 dark:text-red-300">
+					Failed
+				</div>
+			</div>
+			<div class="rounded-lg bg-slate-100 px-2 py-1.5 text-center dark:bg-slate-800/80">
+				<div class="text-lg font-bold text-slate-800 dark:text-slate-100">
+					{{ s.skipped }}
+				</div>
+				<div class="text-[10px] font-semibold uppercase text-slate-600 dark:text-slate-400">
+					Skipped
+				</div>
+			</div>
+			<div class="rounded-lg bg-amber-50 px-2 py-1.5 text-center dark:bg-amber-950/40">
+				<div class="text-lg font-bold text-amber-900 dark:text-amber-100">
+					{{ s.running }}
+				</div>
+				<div class="text-[10px] font-semibold uppercase text-amber-800 dark:text-amber-200">
+					Running
+				</div>
+			</div>
+		</div>
+		<ul class="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-2">
+			@for (t of r; track t.id) {
+				<li
+					class="flex items-start gap-2 rounded-lg border border-slate-200/80 bg-white px-2 py-2 dark:border-slate-800 dark:bg-slate-900/80"
+				>
+					@switch (t.status) {
+						@case ('passed') {
+							<i class="pi pi-check-circle mt-0.5 text-sm text-emerald-500"></i>
+						}
+						@case ('failed') {
+							<i class="pi pi-times-circle mt-0.5 text-sm text-red-500"></i>
+						}
+						@case ('skipped') {
+							<i class="pi pi-minus-circle mt-0.5 text-sm text-slate-400"></i>
+						}
+						@default {
+							<i class="pi pi-spinner mt-0.5 animate-spin text-sm text-amber-500"></i>
+						}
+					}
+					<div class="min-w-0 flex-1">
+						<p class="text-sm font-medium text-slate-900 dark:text-white">
+							{{ t.title }}
+						</p>
+						@if (t.durationMs != null) {
+							<p class="text-[10px] text-slate-500">{{ t.durationMs }} ms</p>
+						}
+						@if (t.error) {
+							<pre
+								class="mt-1 max-h-24 overflow-auto font-mono text-[10px] text-red-600 dark:text-red-400"
+								>{{ t.error }}</pre
+							>
+						}
+					</div>
+				</li>
+			}
+		</ul>
+	}
+</div>

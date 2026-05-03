@@ -1,0 +1,63 @@
+{
+  "apis": [
+    {
+      "id": "supplier-products-list",
+      "method": "GET",
+      "path": "/supplier-portal/products",
+      "summary": "List supplier-visible products with syndication flags",
+      "tags": ["supplier-portal", "products"],
+      "description": "Read-only catalog slice for authenticated suppliers.",
+      "responses": { "200": { "description": "Paged product rows" } }
+    },
+    {
+      "id": "supplier-uploads-create",
+      "method": "POST",
+      "path": "/supplier-portal/uploads",
+      "summary": "Create upload job for catalog files (async processing)",
+      "tags": ["supplier-portal", "uploads"],
+      "description": "Accepts multipart metadata; returns job id. Does not execute in this doc.",
+      "requestBody": { "contentType": "multipart/form-data" },
+      "responses": { "202": { "description": "Job accepted" } }
+    },
+    {
+      "id": "supplier-statistics",
+      "method": "GET",
+      "path": "/supplier-portal/statistics",
+      "summary": "Dashboard KPIs for uploads and SKU health",
+      "tags": ["supplier-portal", "analytics"],
+      "responses": { "200": { "description": "Aggregated metrics" } }
+    },
+    {
+      "id": "supplier-syndication-status",
+      "method": "GET",
+      "path": "/supplier-portal/syndication/status",
+      "summary": "Syndication queue depth and last successful push",
+      "tags": ["supplier-portal", "syndication"],
+      "responses": { "200": { "description": "Status snapshot" } }
+    },
+    {
+      "id": "sku-status",
+      "method": "GET",
+      "path": "/supplier-portal/skus/:skuId/status",
+      "summary": "SKU validation and listing state",
+      "tags": ["supplier-portal", "sku"],
+      "responses": { "200": { "description": "SKU status payload" } }
+    },
+    {
+      "id": "agent-session-get",
+      "method": "GET",
+      "path": "/agents/sessions/:sessionId",
+      "summary": "Fetch agent session metadata",
+      "tags": ["agents", "sessions"],
+      "responses": { "200": { "description": "Session" } }
+    },
+    {
+      "id": "agent-session-messages",
+      "method": "POST",
+      "path": "/agents/sessions/:sessionId/messages",
+      "summary": "Append user message and trigger orchestrator run",
+      "tags": ["agents", "chat"],
+      "responses": { "200": { "description": "Run + assistant message" } }
+    }
+  ]
+}

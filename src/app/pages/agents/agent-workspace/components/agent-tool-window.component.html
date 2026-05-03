@@ -1,0 +1,122 @@
+@let col = collapsed();
+
+@if (col) {
+	<aside
+		class="flex h-full w-12 shrink-0 flex-col border-l border-violet-200/70 bg-white/95 py-2 dark:border-indigo-800/60 dark:bg-slate-950/95"
+		aria-label="Workspace tools"
+	>
+		<div
+			class="flex flex-col items-center gap-1 border-b border-violet-100 pb-2 dark:border-indigo-900/70"
+		>
+			<span
+				class="text-[9px] font-bold uppercase tracking-wide text-slate-400 [writing-mode:vertical-rl]"
+				>Tools</span
+			>
+		</div>
+		@for (t of tabs; track t.id) {
+			<button
+				type="button"
+				(click)="pickTab(t.id); toggleCollapsed.emit()"
+				class="relative flex h-10 w-full items-center justify-center rounded-lg text-slate-600 transition hover:bg-violet-50 dark:text-slate-400 dark:hover:bg-slate-900"
+				[class.bg-violet-100]="activeTab() === t.id"
+				[class.text-violet-900]="activeTab() === t.id"
+				[class.dark:bg-indigo-900/80]="activeTab() === t.id"
+				[class.dark:text-white]="activeTab() === t.id"
+				[title]="t.label"
+			>
+				@if (t.id === 'approvals' && approvals().some((a) => a.status === 'pending')) {
+					<span
+						class="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-amber-500"
+					></span>
+				}
+				<i [class]="t.icon + ' text-lg'"></i>
+			</button>
+		}
+	</aside>
+} @else {
+	<aside
+		class="flex h-full min-h-0 min-w-0 shrink-0 flex-col border-l border-violet-200/70 bg-white/95 dark:border-indigo-800/60 dark:bg-slate-950/95"
+		[style.width.px]="480"
+		aria-label="Workspace tools expanded"
+	>
+		<div
+			class="flex shrink-0 items-center justify-between gap-2 border-b border-violet-200/60 px-3 py-2 dark:border-indigo-900/70"
+		>
+			<span class="text-sm font-semibold text-slate-900 dark:text-white">Workspace</span>
+			<button
+				type="button"
+				(click)="toggleCollapsed.emit()"
+				class="inline-flex h-8 items-center gap-1 rounded-lg border border-violet-200/70 px-2 text-xs font-medium text-slate-600 hover:bg-violet-50 dark:border-indigo-800 dark:text-slate-300 dark:hover:bg-slate-900"
+				title="Collapse panel"
+			>
+				<i class="pi pi-angle-right"></i>
+			</button>
+		</div>
+		<div
+			class="flex shrink-0 gap-0 overflow-x-auto border-b border-violet-100 px-1 dark:border-indigo-900/70"
+		>
+			@for (t of tabs; track t.id) {
+				<button
+					type="button"
+					(click)="pickTab(t.id)"
+					class="relative flex shrink-0 items-center gap-1 rounded-t-lg px-2.5 py-2 text-[11px] font-semibold transition"
+					[class.border-b-2]="activeTab() === t.id"
+					[class.border-violet-600]="activeTab() === t.id"
+					[class.text-violet-900]="activeTab() === t.id"
+					[class.dark:border-cyan-400]="activeTab() === t.id"
+					[class.dark:text-white]="activeTab() === t.id"
+					[class.text-slate-500]="activeTab() !== t.id"
+				>
+					@if (t.id === 'approvals' && approvals().some((a) => a.status === 'pending')) {
+						<span
+							class="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-amber-500"
+						></span>
+					}
+					<i [class]="t.icon + ' text-xs'"></i>
+					{{ t.label }}
+				</button>
+			}
+		</div>
+		<div class="min-h-0 flex-1 overflow-hidden">
+			@switch (activeTab()) {
+				@case ('browser') {
+					<app-agent-browser-preview
+						class="block h-full"
+						[browserState]="browserState()"
+						(startPreview)="browserStartPreview.emit()"
+					/>
+				}
+				@case ('artifacts') {
+					<app-agent-artifacts-panel class="block h-full" [artifacts]="artifacts()" />
+				}
+				@case ('console') {
+					<app-agent-console-panel
+						class="block h-full"
+						[entries]="consoleEntries()"
+						[toolCalls]="toolCalls()"
+					/>
+				}
+				@case ('tests') {
+					<app-agent-test-results-panel class="block h-full" [results]="testResults()" />
+				}
+				@case ('tools') {
+					<app-agent-internal-tools-panel
+						class="block h-full"
+						[toolCalls]="toolCalls()"
+					/>
+				}
+				@case ('activity') {
+					<app-agent-activity-panel class="block h-full" [events]="runtimeEvents()" />
+				}
+				@case ('approvals') {
+					<app-agent-approval-panel
+						class="block h-full"
+						[approvals]="approvals()"
+						(approve)="approveRequest.emit($event)"
+						(reject)="rejectRequest.emit($event)"
+					/>
+				}
+			}
+		</div>
+	</aside>
+}

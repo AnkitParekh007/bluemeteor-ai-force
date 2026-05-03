@@ -1,0 +1,83 @@
+<div
+	class="flex h-full min-h-0 flex-col overflow-y-auto px-3 py-3 text-sm text-slate-700 dark:text-slate-200"
+>
+	<p class="text-xs font-semibold uppercase tracking-wide text-violet-600 dark:text-cyan-300">
+		Internal tools (read-only)
+	</p>
+	<p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+		Latest tool executions for this run. Outputs are capped server-side; open Activity for full
+		events.
+	</p>
+	@if (toolCalls().length === 0) {
+		<p class="mt-6 text-center text-xs text-slate-500 dark:text-slate-500">
+			No tool calls yet.
+		</p>
+	} @else {
+		<ul class="mt-4 flex flex-col gap-3">
+			@for (t of toolCalls(); track t.id) {
+				<li
+					class="rounded-xl border border-violet-200/60 bg-white/90 px-3 py-2 shadow-sm dark:border-indigo-800/60 dark:bg-slate-900/70"
+				>
+					<div class="flex flex-wrap items-center gap-2">
+						<span class="font-semibold text-slate-900 dark:text-white">{{
+							t.name
+						}}</span>
+						<span
+							class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+						>
+							{{ sourceFor(t.name) }}
+						</span>
+						@if (t.name.startsWith('mcp_')) {
+							<span
+								class="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold uppercase text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-100"
+								>MCP</span
+							>
+						}
+						@if (connectorBadge(t.name, t.output); as cb) {
+							<span
+								class="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase text-sky-900 dark:bg-sky-900/50 dark:text-sky-100"
+								>{{ cb }}</span
+							>
+						}
+						@if (mockFallback(t.output)) {
+							<span
+								class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-900 dark:bg-amber-900/40 dark:text-amber-100"
+								>Mock</span
+							>
+						}
+						@if (t.output && isReadOnlyBadge(t.output)) {
+							<span
+								class="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-100"
+								>Read-only</span
+							>
+						}
+						@if (t.status === 'blocked' || isMcpBlocked(t.output)) {
+							<span
+								class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-900 dark:bg-amber-900/40 dark:text-amber-100"
+								>Blocked</span
+							>
+						}
+						<span
+							class="ml-auto text-[10px] font-bold uppercase"
+							[class.text-emerald-600]="t.status === 'completed'"
+							[class.text-amber-600]="
+								t.status === 'running' || t.status === 'pending'
+							"
+							[class.text-red-600]="t.status === 'failed' || t.status === 'blocked'"
+						>
+							{{ t.status }}
+						</span>
+					</div>
+					@if (summaryFromOutput(t.output); as sum) {
+						<p class="mt-1 line-clamp-3 text-xs text-slate-600 dark:text-slate-400">
+							{{ sum }}
+						</p>
+					}
+					@if (t.error) {
+						<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ t.error }}</p>
+					}
+				</li>
+			}
+		</ul>
+	}
+</div>

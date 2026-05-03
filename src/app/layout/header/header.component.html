@@ -1,0 +1,100 @@
+<header
+  class="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-violet-200/50 bg-white/85 px-4 backdrop-blur-md dark:border-indigo-800/60 dark:bg-slate-950/88 lg:px-6"
+>
+  <a
+    routerLink="/dashboard"
+    class="flex min-w-0 items-center gap-2.5 rounded-lg outline-none ring-cyan-500/35 focus-visible:ring-2"
+    aria-label="Bluemeteor home"
+  >
+    <span
+      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 via-violet-600 to-indigo-700 text-white shadow-md shadow-cyan-500/25"
+      aria-hidden="true"
+    >
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M12 3L4 19h4.5L12 12l3.5 7H20L12 3z"
+          fill="currentColor"
+          opacity="0.95"
+        />
+        <path
+          d="M12 8l-2.5 5h5L12 8z"
+          fill="currentColor"
+          opacity="0.35"
+        />
+      </svg>
+    </span>
+    <span
+      class="truncate text-lg font-semibold tracking-tight text-slate-900 dark:text-white"
+    >
+      Bluemeteor
+    </span>
+  </a>
+
+  <div class="flex items-center gap-3 sm:gap-4">
+    <div
+      class="flex items-center rounded-xl border border-violet-200/70 bg-violet-50/50 p-0.5 dark:border-indigo-800/80 dark:bg-slate-900/80"
+      role="group"
+      aria-label="Theme"
+    >
+      <p-button
+        type="button"
+        (onClick)="setTheme('system')"
+        [text]="!isThemeActive('system')"
+        [rounded]="true"
+        severity="secondary"
+        icon="pi pi-desktop"
+        [styleClass]="
+          isThemeActive('system')
+            ? '!bg-white !text-violet-700 dark:!bg-slate-800 dark:!text-violet-300 shadow-sm'
+            : ''
+        "
+        [attr.aria-pressed]="isThemeActive('system')"
+        aria-label="Use system theme"
+      />
+      <p-button
+        type="button"
+        (onClick)="setTheme('light')"
+        [text]="!isThemeActive('light')"
+        [rounded]="true"
+        severity="secondary"
+        icon="pi pi-sun"
+        [styleClass]="
+          isThemeActive('light')
+            ? '!bg-white !text-amber-600 dark:!bg-slate-800 dark:!text-amber-400 shadow-sm'
+            : ''
+        "
+        [attr.aria-pressed]="isThemeActive('light')"
+        aria-label="Light theme"
+      />
+      <p-button
+        type="button"
+        (onClick)="setTheme('dark')"
+        [text]="!isThemeActive('dark')"
+        [rounded]="true"
+        severity="secondary"
+        icon="pi pi-moon"
+        [styleClass]="
+          isThemeActive('dark')
+            ? '!bg-white !text-indigo-600 dark:!bg-slate-800 dark:!text-indigo-300 shadow-sm'
+            : ''
+        "
+        [attr.aria-pressed]="isThemeActive('dark')"
+        aria-label="Dark theme"
+      />
+    </div>
+
+    <p-button
+      type="button"
+      [label]="accountLabel()"
+      icon="pi pi-chevron-down"
+      iconPos="right"
+      [text]="true"
+      severity="secondary"
+      styleClass="!text-slate-700 dark:!text-slate-200 max-w-[12rem] [&_.p-button-label]:truncate"
+      (onClick)="openUserMenu($event)"
+      aria-haspopup="true"
+      [attr.title]="accountLabel()"
+    />
+    <p-menu #userMenu [model]="userMenuModel" [popup]="true" appendTo="body" />
+  </div>
+</header>

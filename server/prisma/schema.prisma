@@ -1,0 +1,816 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AgentSession {
+  id           String   @id
+  agentSlug    String
+  title        String
+  mode         String
+  status       String
+  createdAt    DateTime
+  updatedAt    DateTime
+  messageCount Int
+  preview      String?
+  messages     AgentMessage[]
+  runs         AgentRun[]
+  artifacts    AgentArtifact[]
+  events       AgentRuntimeEvent[]
+
+  @@index([agentSlug])
+  @@index([createdAt])
+  @@map("agent_sessions")
+}
+
+model AgentMessage {
+  id           String       @id
+  sessionId    String
+  role         String
+  content      String
+  status       String
+  createdAt    DateTime
+  metadataJson String?
+  session      AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("agent_messages")
+}
+
+model AgentRun {
+  id            String        @id
+  sessionId     String
+  agentSlug     String
+  mode          String
+  status        String
+  userMessage   String
+  finalAnswer   String?
+  error         String?
+  actorUserId   String?
+  actorEmail    String?
+  /// Correlates logs, provider calls, and support tickets for a run (not a distributed trace span ID).
+  traceId       String?
+  createdAt     DateTime
+  updatedAt     DateTime
+  completedAt   DateTime?
+  session       AgentSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  steps         AgentRunStep[]
+  toolCalls     AgentToolCall[]
+  approvals     AgentApproval[]
+
+  @@index([sessionId])
+  @@index([agentSlug])
+  @@index([createdAt])
+  @@index([actorUserId])
+  @@index([traceId])
+  @@map("agent_runs")
+}
+
+model AgentRunStep {
+  id           String    @id
+  runId        String
+  title        String
+  description  String?
+  status       String
+  startedAt    DateTime?
+  completedAt  DateTime?
+  error        String?
+  metadataJson String?
+  run          AgentRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@map("agent_run_steps")
+}
+
+model AgentToolCall {
+  id           String    @id
+  runId        String
+  name         String
+  description  String?
+  status       String
+  inputJson    String?
+  outputJson   String?
+  error        String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  run          AgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@map("agent_tool_calls")
+}
+
+model AgentArtifact {
+  id           String       @id
+  sessionId    String
+  runId        String?
+  agentSlug    String
+  type         String
+  title        String
+  description  String?
+  content      String
+  language     String?
+  createdAt    DateTime
+  updatedAt    DateTime?
+  metadataJson String?
+  session      AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([runId])
+  @@index([agentSlug])
+  @@map("agent_artifacts")
+}
+
+model AgentRuntimeEvent {
+  id           String       @id
+  runId        String?
+  sessionId    String
+  agentSlug    String
+  type         String
+  title        String
+  message      String?
+  timestamp    DateTime
+  payloadJson  String?
+  session      AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([runId])
+  @@index([type])
+  @@index([timestamp])
+  @@map("agent_runtime_events")
+}
+
+model AgentApproval {
+  id                 String   @id
+  runId              String
+  title              String
+  description        String
+  riskLevel          String
+  actionType         String
+  payloadJson        String
+  status             String
+  createdAt          DateTime
+  resolvedAt         DateTime?
+  requestedByUserId  String?
+  resolvedByUserId   String?
+  resolvedByEmail    String?
+  run                AgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([requestedByUserId])
+  @@index([resolvedByUserId])
+  @@map("agent_approvals")
+}
+
+model AgentAuditLog {
+  id          String   @id
+  actorUserId String?
+  actorEmail  String?
+  sessionId   String?
+  runId       String?
+  agentSlug   String?
+  action      String
+  detailsJson String?
+  createdAt   DateTime
+
+  @@index([sessionId])
+  @@index([agentSlug])
+  @@index([createdAt])
+  @@index([actorUserId])
+  @@map("agent_audit_logs")
+}
+
+model RagDocument {
+  id           String     @id
+  title        String
+  sourceType   String
+  sourceUri    String?
+  content      String
+  metadataJson String?
+  createdAt    DateTime
+  updatedAt    DateTime
+  chunks       RagChunk[]
+
+  @@index([sourceType])
+  @@index([createdAt])
+  @@map("rag_documents")
+}
+
+model RagChunk {
+  id            String      @id
+  documentId    String
+  content       String
+  chunkIndex    Int
+  tokenCount    Int?
+  embeddingJson String?
+  metadataJson  String?
+  createdAt     DateTime
+  document      RagDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@map("rag_chunks")
+}
+
+model BrowserSession {
+  id        String   @id
+  sessionId String
+  runId     String?
+  agentSlug String
+  url       String?
+  title     String?
+  status    String
+  headless  Boolean
+  createdAt DateTime
+  updatedAt DateTime
+  expiresAt DateTime?
+  error     String?
+
+  actions   BrowserAction[]
+  snapshots BrowserSnapshot[]
+
+  @@index([sessionId])
+  @@index([runId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("browser_sessions")
+}
+
+model BrowserAction {
+  id                String   @id
+  browserSessionId  String
+  runId             String
+  type              String
+  status            String
+  selector          String?
+  value             String?
+  url               String?
+  resultJson        String?
+  error             String?
+  createdAt         DateTime
+  startedAt         DateTime?
+  completedAt       DateTime?
+  browserSession    BrowserSession @relation(fields: [browserSessionId], references: [id], onDelete: Cascade)
+
+  @@index([browserSessionId])
+  @@index([runId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("browser_actions")
+}
+
+model BrowserSnapshot {
+  id               String   @id
+  browserSessionId String
+  runId            String?
+  url              String?
+  title            String?
+  screenshotPath   String?
+  screenshotUrl    String?
+  domSummary       String?
+  textContent      String?
+  createdAt        DateTime
+  browserSession   BrowserSession @relation(fields: [browserSessionId], references: [id], onDelete: Cascade)
+
+  @@index([browserSessionId])
+  @@index([runId])
+  @@index([createdAt])
+  @@map("browser_snapshots")
+}
+
+model ToolExecution {
+  id          String    @id
+  runId       String
+  sessionId   String
+  agentSlug   String
+  toolId      String
+  status      String
+  riskLevel   String
+  inputJson   String?
+  outputJson  String?
+  error       String?
+  approvalId  String?
+  createdAt   DateTime
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  @@index([runId])
+  @@index([sessionId])
+  @@index([toolId])
+  @@index([status])
+  @@index([approvalId])
+  @@index([createdAt])
+  @@map("tool_executions")
+}
+
+model McpServer {
+  id           String    @id
+  name         String
+  description  String?
+  transport    String
+  enabled      Boolean
+  status       String
+  riskLevel    String
+  readOnly     Boolean
+  configJson   String?
+  startedAt    DateTime?
+  stoppedAt    DateTime?
+  error        String?
+  createdAt    DateTime
+  updatedAt    DateTime
+  tools        McpTool[]
+
+  @@index([enabled])
+  @@index([status])
+  @@map("mcp_servers")
+}
+
+model McpTool {
+  id              String    @id
+  serverId        String
+  name            String
+  description     String?
+  inputSchemaJson String?
+  riskLevel       String
+  readOnly        Boolean
+  enabled         Boolean
+  createdAt       DateTime
+  updatedAt       DateTime
+  server          McpServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@index([serverId])
+  @@index([name])
+  @@map("mcp_tools")
+}
+
+model McpToolCall {
+  id          String    @id
+  serverId   String
+  toolName    String
+  runId       String?
+  sessionId   String?
+  agentSlug   String?
+  inputJson   String?
+  outputJson  String?
+  isError     Boolean
+  error       String?
+  createdAt   DateTime
+  completedAt DateTime?
+
+  @@index([serverId])
+  @@index([runId])
+  @@index([sessionId])
+  @@index([agentSlug])
+  @@index([toolName])
+  @@index([createdAt])
+  @@map("mcp_tool_calls")
+}
+
+model ConnectorCall {
+  id             String    @id
+  connectorId    String
+  provider       String
+  operation      String
+  inputJson      String?
+  outputSummary  String?
+  status         String
+  error          String?
+  createdAt      DateTime
+  completedAt    DateTime?
+
+  @@index([connectorId])
+  @@index([provider])
+  @@index([operation])
+  @@index([status])
+  @@index([createdAt])
+  @@map("connector_calls")
+}
+
+model BrowserProfile {
+  id               String    @id
+  name             String
+  description      String?
+  targetBaseUrl    String
+  environment      String
+  status           String
+  storageStatePath String?
+  createdByUserId  String?
+  createdAt        DateTime
+  updatedAt        DateTime
+  lastUsedAt       DateTime?
+  expiresAt        DateTime?
+  metadataJson     String?
+
+  @@index([status])
+  @@index([environment])
+  @@index([createdAt])
+  @@map("browser_profiles")
+}
+
+model BrowserAuthCapture {
+  id           String    @id
+  sessionId    String
+  runId        String?
+  profileId    String?
+  status       String
+  loginUrl     String
+  startedAt    DateTime
+  completedAt  DateTime?
+  error        String?
+  metadataJson String?
+
+  @@index([sessionId])
+  @@index([runId])
+  @@index([profileId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("browser_auth_captures")
+}
+
+model PlaywrightSpec {
+  id           String    @id
+  sessionId    String
+  runId        String?
+  agentSlug    String
+  title        String
+  templateKey  String?
+  specPath     String?
+  content      String
+  status       String
+  createdAt    DateTime
+  updatedAt    DateTime?
+  metadataJson String?
+
+  @@index([sessionId])
+  @@index([runId])
+  @@index([agentSlug])
+  @@index([status])
+  @@index([createdAt])
+  @@map("playwright_specs")
+}
+
+model PlaywrightTestRun {
+  id             String    @id
+  sessionId      String
+  runId          String?
+  agentSlug      String
+  profileId      String?
+  status         String
+  total          Int
+  passed         Int
+  failed         Int
+  skipped        Int
+  durationMs     Int?
+  startedAt      DateTime
+  completedAt    DateTime?
+  error          String?
+  resultJson     String?
+  reportPath     String?
+  tracePath      String?
+  videoPath      String?
+  screenshotPath String?
+  metadataJson   String?
+
+  cases PlaywrightTestCase[]
+
+  @@index([sessionId])
+  @@index([runId])
+  @@index([agentSlug])
+  @@index([profileId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("playwright_test_runs")
+}
+
+model PlaywrightTestCase {
+  id             String    @id
+  testRunId      String
+  title          String
+  status         String
+  durationMs     Int?
+  error          String?
+  screenshotPath String?
+  createdAt      DateTime
+
+  testRun PlaywrightTestRun @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+
+  @@index([testRunId])
+  @@index([status])
+  @@map("playwright_test_cases")
+}
+
+// ——— Agent intelligence (prompts, skill packs, workflows, evaluation) ———
+
+model AgentPromptTemplate {
+  id               String   @id
+  agentSlug        String
+  name             String
+  description      String?
+  version          String
+  status           String
+  type             String
+  content          String
+  variablesJson    String?
+  createdAt        DateTime
+  updatedAt        DateTime
+  createdByUserId  String?
+  metadataJson     String?
+
+  @@index([agentSlug])
+  @@index([status])
+  @@index([version])
+  @@index([createdAt])
+  @@index([agentSlug, type, status])
+  @@map("agent_prompt_templates")
+}
+
+model AgentSkillPack {
+  id                     String   @id
+  agentSlug              String
+  key                    String
+  name                   String
+  description            String?
+  status                 String
+  toolIdsJson            String
+  promptTemplateIdsJson  String?
+  workflowTemplateIdsJson String?
+  knowledgeSourcesJson   String?
+  createdAt              DateTime
+  updatedAt              DateTime
+  metadataJson           String?
+
+  @@unique([agentSlug, key])
+  @@index([agentSlug])
+  @@index([key])
+  @@index([status])
+  @@index([createdAt])
+  @@map("agent_skill_packs")
+}
+
+model AgentWorkflowTemplate {
+  id                       String   @id
+  agentSlug                String
+  key                      String
+  name                     String
+  description              String?
+  category                 String
+  mode                     String
+  stepsJson                String
+  requiredToolsJson        String?
+  outputArtifactTypesJson  String?
+  status                   String
+  createdAt                DateTime
+  updatedAt                DateTime
+  metadataJson             String?
+
+  @@unique([agentSlug, key])
+  @@index([agentSlug])
+  @@index([key])
+  @@index([status])
+  @@index([createdAt])
+  @@map("agent_workflow_templates")
+}
+
+model AgentEvaluationCase {
+  id                    String   @id
+  agentSlug             String
+  key                   String
+  name                  String
+  description           String?
+  inputPrompt           String
+  expectedBehaviorsJson String
+  expectedArtifactsJson String?
+  expectedToolsJson     String?
+  category              String
+  priority              String
+  status                String
+  createdAt             DateTime
+  updatedAt             DateTime
+  metadataJson          String?
+
+  @@unique([agentSlug, key])
+  @@index([agentSlug])
+  @@index([key])
+  @@index([status])
+  @@index([createdAt])
+  @@map("agent_evaluation_cases")
+}
+
+model AgentEvaluationRun {
+  id               String    @id
+  agentSlug        String
+  promptTemplateId String?
+  skillPackId      String?
+  status           String
+  totalCases       Int
+  passedCases      Int
+  failedCases      Int
+  score            Float
+  startedAt        DateTime
+  completedAt      DateTime?
+  resultJson       String?
+  error            String?
+  metadataJson     String?
+
+  caseResults AgentEvaluationCaseResult[]
+
+  @@index([agentSlug])
+  @@index([status])
+  @@index([startedAt])
+  @@map("agent_evaluation_runs")
+}
+
+model AgentEvaluationCaseResult {
+  id                String   @id
+  evaluationRunId   String
+  evaluationCaseId  String
+  status            String
+  score             Float
+  inputPrompt       String
+  actualAnswer      String?
+  expectedSummary   String?
+  toolResultsJson   String?
+  artifactResultsJson String?
+  issuesJson        String?
+  createdAt         DateTime
+
+  run AgentEvaluationRun @relation(fields: [evaluationRunId], references: [id], onDelete: Cascade)
+
+  @@index([evaluationRunId])
+  @@index([evaluationCaseId])
+  @@index([status])
+  @@map("agent_evaluation_case_results")
+}
+
+// ——— Auth / RBAC ———
+
+model User {
+  id           String   @id
+  email        String   @unique
+  name         String
+  passwordHash String
+  status       String
+  department   String?
+  jobTitle     String?
+  avatarUrl    String?
+  createdAt    DateTime
+  updatedAt    DateTime
+  lastLoginAt  DateTime?
+
+  userRoles       UserRole[]
+  teamMembers     TeamMember[]
+  refreshTokens   RefreshToken[]
+  userAgentAccess UserAgentAccess[]
+  pilotFeedback   PilotFeedback[]
+
+  @@index([email])
+  @@index([status])
+  @@map("users")
+}
+
+model PilotFeedback {
+  id               String   @id
+  userId           String?
+  userEmail        String?
+  userRole         String
+  agentSlug        String
+  rating           Int
+  taskType         String
+  whatWorked       String
+  whatFailed       String
+  timeSavedMinutes Int?
+  wouldUseAgain    Boolean
+  notes            String?
+  sessionId        String?
+  runId            String?
+  traceId          String?
+  createdAt        DateTime
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([agentSlug])
+  @@index([userRole])
+  @@index([rating])
+  @@index([createdAt])
+  @@map("pilot_feedback")
+}
+
+model Role {
+  id          String   @id
+  key         String   @unique
+  name        String
+  description String?
+  createdAt   DateTime
+  updatedAt   DateTime
+
+  userRoles        UserRole[]
+  rolePermissions  RolePermission[]
+
+  @@index([key])
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id
+  key         String   @unique
+  name        String
+  description String?
+  category    String
+  createdAt   DateTime
+  updatedAt   DateTime
+
+  rolePermissions RolePermission[]
+
+  @@index([key])
+  @@index([category])
+  @@map("permissions")
+}
+
+model UserRole {
+  id        String   @id
+  userId    String
+  roleId    String
+  createdAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           String   @id
+  roleId       String
+  permissionId String
+  createdAt    DateTime
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model Team {
+  id          String   @id
+  key         String   @unique
+  name        String
+  description String?
+  createdAt   DateTime
+  updatedAt   DateTime
+
+  members TeamMember[]
+
+  @@index([key])
+  @@map("teams")
+}
+
+model TeamMember {
+  id        String   @id
+  teamId    String
+  userId    String
+  role      String
+  createdAt DateTime
+  team      Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+  @@map("team_members")
+}
+
+model UserAgentAccess {
+  id          String   @id
+  userId      String
+  agentSlug   String
+  accessLevel String
+  createdAt   DateTime
+  updatedAt   DateTime
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, agentSlug])
+  @@index([userId])
+  @@index([agentSlug])
+  @@map("user_agent_access")
+}
+
+model RefreshToken {
+  id        String    @id
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}

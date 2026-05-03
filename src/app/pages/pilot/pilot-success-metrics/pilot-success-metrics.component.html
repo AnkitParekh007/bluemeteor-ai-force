@@ -1,0 +1,123 @@
+<div class="space-y-6">
+	<div class="flex flex-wrap items-center justify-between gap-2">
+		<p class="text-sm text-slate-600 dark:text-slate-400">
+			Aggregated pilot feedback plus non-sensitive admin and ops snapshots. No raw logs.
+		</p>
+		<button
+			type="button"
+			(click)="refresh()"
+			class="rounded-lg border border-violet-200 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:border-indigo-700 dark:text-slate-100"
+		>
+			Refresh
+		</button>
+	</div>
+
+	@if (loading()) {
+		<p class="text-sm text-slate-500">Loading metrics…</p>
+	} @else if (error(); as err) {
+		<p class="text-sm text-rose-700 dark:text-rose-300">{{ err }}</p>
+	} @else if (bundle(); as b) {
+		@if (pilotError(b); as pe) {
+			<p class="text-sm text-rose-700">Pilot metrics unavailable: {{ pe }}</p>
+		} @else if (pilotMetrics(); as pilot) {
+			@if (pilotFeedback(pilot); as fb) {
+				<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+					<app-pilot-metric-card
+						label="Feedback submissions"
+						[value]="(fb['totalCount'] ?? '—') + ''"
+						status="unknown"
+					/>
+					<app-pilot-metric-card
+						label="Average rating"
+						[value]="fb['averageRating'] != null ? (fb['averageRating'] + '') : '—'"
+						status="unknown"
+					/>
+					<app-pilot-metric-card
+						label="Would use again"
+						[value]="fb['wouldUseAgainPercent'] != null ? (fb['wouldUseAgainPercent'] + '%') : '—'"
+						status="unknown"
+					/>
+					<app-pilot-metric-card
+						label="Est. time saved (min)"
+						[value]="(fb['estimatedTimeSavedMinutesTotal'] ?? 0) + ''"
+						status="unknown"
+					/>
+					<app-pilot-metric-card
+						label="Distinct pilot users (by user id)"
+						[value]="(fb['estimatedDistinctPilotUsers'] ?? '—') + ''"
+						status="unknown"
+					/>
+				</div>
+			}
+
+			@if (pilot['byAgent']; as rows) {
+				<div class="rounded-xl border border-violet-200/70 bg-white/90 p-4 dark:border-indigo-800 dark:bg-slate-900/80">
+					<h3 class="text-sm font-semibold text-slate-900 dark:text-white">By agent</h3>
+					<ul class="mt-2 space-y-1 text-xs text-slate-700 dark:text-slate-300">
+						@for (row of asAgentRows(rows); track row.agentSlug) {
+							<li class="font-mono">
+								{{ row.agentSlug }} — count {{ row.count }}, avg {{ row.avgRating ?? '—' }}, time saved sum
+								{{ row.timeSavedMinutesSum ?? 0 }}
+							</li>
+						}
+					</ul>
+				</div>
+			}
+
+			@if (pilot['byRole']; as rrows) {
+				<div class="rounded-xl border border-violet-200/70 bg-white/90 p-4 dark:border-indigo-800 dark:bg-slate-900/80">
+					<h3 class="text-sm font-semibold text-slate-900 dark:text-white">By role</h3>
+					<ul class="mt-2 space-y-1 text-xs text-slate-700 dark:text-slate-300">
+						@for (row of asRoleRows(rrows); track row.userRole) {
+							<li class="font-mono">
+								{{ row.userRole }} — {{ row.count }} · avg {{ row.avgRating ?? '—' }}
+							</li>
+						}
+					</ul>
+				</div>
+			}
+
+			@if (pilot['topIssues']; as issues) {
+				<div class="rounded-xl border border-amber-200/70 bg-amber-50/50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+					<h3 class="text-sm font-semibold text-amber-950 dark:text-amber-100">Low-rating themes (snippets)</h3>
+					<ul class="mt-2 list-disc space-y-1 pl-4 text-xs text-amber-950 dark:text-amber-50">
+						@for (it of asSnippetList(issues); track $index) {
+							<li>{{ it.agentSlug }} ({{ it.userRole }}): {{ it.snippet }}</li>
+						}
+					</ul>
+				</div>
+			}
+
+			@if (pilot['topWins']; as wins) {
+				<div class="rounded-xl border border-emerald-200/70 bg-emerald-50/50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
+					<h3 class="text-sm font-semibold text-emerald-950 dark:text-emerald-100">High-rating wins (snippets)</h3>
+					<ul class="mt-2 list-disc space-y-1 pl-4 text-xs text-emerald-950 dark:text-emerald-50">
+						@for (w of asSnippetList(wins); track $index) {
+							<li>{{ w.agentSlug }} ({{ w.userRole }}): {{ w.snippet }}</li>
+						}
+					</ul>
+				</div>
+			}
+		}
+
+		<div class="grid gap-4 lg:grid-cols-2">
+			<div class="rounded-xl border border-violet-200/70 bg-white/90 p-4 dark:border-indigo-800 dark:bg-slate-900/80">
+				<h3 class="text-sm font-semibold text-slate-900 dark:text-white">Pending approvals (admin)</h3>
+				<p class="mt-1 text-2xl font-bold">{{ approvalCount(b['approvals']) }}</p>
+			</div>
+			<div class="rounded-xl border border-violet-200/70 bg-white/90 p-4 dark:border-indigo-800 dark:bg-slate-900/80">
+				<h3 class="text-sm font-semibold text-slate-900 dark:text-white">Admin summary (snippet)</h3>
+				<pre
+					class="mt-2 max-h-48 overflow-auto rounded-lg bg-slate-50 p-2 text-[10px] text-slate-800 dark:bg-slate-950 dark:text-slate-200"
+				>{{ adminSnippet(b['admin']) }}</pre>
+			</div>
+		</div>
+
+		<div class="rounded-xl border border-violet-200/70 bg-white/90 p-4 dark:border-indigo-800 dark:bg-slate-900/80">
+			<h3 class="text-sm font-semibold text-slate-900 dark:text-white">Ops /metrics (subset)</h3>
+			<pre
+				class="mt-2 max-h-48 overflow-auto rounded-lg bg-slate-50 p-2 text-[10px] text-slate-800 dark:bg-slate-950 dark:text-slate-200"
+			>{{ stringify(b['opsMetrics']) }}</pre>
+		</div>
+	}
+</div>

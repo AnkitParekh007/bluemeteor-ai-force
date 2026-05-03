@@ -1,0 +1,29 @@
+{
+  "servers": [
+    {
+      "id": "docs-filesystem",
+      "name": "Docs Filesystem MCP",
+      "description": "Read-only MCP scoped to ./docs — disabled by default",
+      "enabled": false,
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "./docs"],
+      "workingDirectory": ".",
+      "riskLevel": "medium",
+      "allowedTools": [],
+      "deniedTools": ["write_file", "delete_file", "move_file", "edit_file"],
+      "readOnly": true
+    },
+    {
+      "id": "demo-docs",
+      "name": "Demo MCP (in-process)",
+      "description": "Mock search/read/list tools — safe for local development",
+      "enabled": false,
+      "mockOnly": true,
+      "transport": "stdio",
+      "riskLevel": "low",
+      "readOnly": true,
+      "deniedTools": ["write_file", "delete_file"]
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+<div class="mx-auto max-w-6xl space-y-4">
+	<app-admin-section-header
+		title="Agents"
+		subtitle="Priority internal agents — readiness from registry; detail is read-only frontend config."
+	/>
+
+	@if (error()) {
+		<p class="text-sm text-red-700 dark:text-red-300">{{ error() }}</p>
+	}
+	@if (loading()) {
+		<p class="text-sm text-slate-500">Loading…</p>
+	}
+
+	<div class="overflow-x-auto rounded-lg border border-slate-200/80 dark:border-slate-700">
+		<table class="w-full min-w-[960px] text-left text-xs">
+			<thead class="bg-slate-100/80 text-[11px] font-semibold uppercase dark:bg-slate-800/80">
+				<tr>
+					<th class="px-2 py-2">Agent</th>
+					<th class="px-2 py-2">Department</th>
+					<th class="px-2 py-2">Readiness</th>
+					<th class="px-2 py-2">Mode</th>
+					<th class="px-2 py-2">Tools</th>
+					<th class="px-2 py-2">Knowledge</th>
+					<th class="px-2 py-2">Approvals</th>
+					<th class="px-2 py-2 text-right">Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (r of rows(); track r.slug) {
+					<tr class="border-t border-slate-200/70 dark:border-slate-700">
+						<td class="px-2 py-1.5">
+							<div class="font-medium">{{ r.displayName }}</div>
+							<div class="font-mono text-[10px] text-slate-500">{{ r.slug }}</div>
+						</td>
+						<td class="px-2 py-1.5 text-slate-600 dark:text-slate-400">{{ r.department || '—' }}</td>
+						<td class="px-2 py-1.5">
+							<span
+								class="rounded px-1.5 py-0.5 font-semibold"
+								[class.bg-emerald-500/15]="scoreBand(r.readinessScore) === 'ok'"
+								[class.text-emerald-800]="scoreBand(r.readinessScore) === 'ok'"
+								[class.dark:text-emerald-200]="scoreBand(r.readinessScore) === 'ok'"
+								[class.bg-amber-500/15]="scoreBand(r.readinessScore) === 'warn'"
+								[class.bg-red-500/15]="scoreBand(r.readinessScore) === 'bad'"
+								>{{ r.readinessScore }}</span
+							>
+						</td>
+						<td class="px-2 py-1.5">{{ r.defaultMode || '—' }}</td>
+						<td class="px-2 py-1.5"
+							>{{ r.allowedToolsCount }} allowed / {{ r.deniedToolsCount }} denied</td
+						>
+						<td class="px-2 py-1.5">{{ r.knowledgeSourcesCount }}</td>
+						<td class="px-2 py-1.5">{{ r.requiresApprovalRules }}</td>
+						<td class="px-2 py-1.5 text-right">
+							<div class="flex flex-wrap justify-end gap-1">
+								<p-button label="Config" size="small" [outlined]="true" (onClick)="openDetail(r.slug)" />
+								<a
+									[routerLink]="['/agents', r.slug]"
+									class="inline-flex items-center rounded border border-slate-300 px-2 py-1 text-[11px] font-medium dark:border-slate-600"
+									>Workspace</a
+								>
+								<a
+									[routerLink]="['/admin', 'prompts']"
+									[queryParams]="{ agent: r.slug }"
+									class="inline-flex items-center rounded border border-slate-300 px-2 py-1 text-[11px] dark:border-slate-600"
+									>Prompts</a
+								>
+								<a
+									[routerLink]="['/admin', 'readiness']"
+									[queryParams]="{ agent: r.slug }"
+									class="inline-flex items-center rounded border border-slate-300 px-2 py-1 text-[11px] dark:border-slate-600"
+									>Readiness</a
+								>
+							</div>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+
+	<p-dialog
+		[visible]="detailSlug() !== null"
+		(visibleChange)="!$event && closeDetail()"
+		[modal]="true"
+		[style]="{ width: 'min(720px, 95vw)' }"
+		[header]="'Agent: ' + (detailSlug() || '')"
+	>
+		@if (detailSlug(); as slug) {
+			@let cfg = configFor(slug);
+			@if (cfg) {
+				<div class="max-h-[70vh] space-y-3 overflow-auto text-sm">
+					<div>
+						<div class="text-xs font-semibold text-slate-500">Role</div>
+						<p>{{ cfg.role }}</p>
+					</div>
+					<div>
+						<div class="text-xs font-semibold text-slate-500">System prompt (bundled)</div>
+						<pre class="mt-1 max-h-40 overflow-auto rounded bg-slate-100 p-2 text-xs dark:bg-slate-800">{{
+							cfg.systemPrompt
+						}}</pre>
+					</div>
+					<div>
+						<div class="text-xs font-semibold text-slate-500">Allowed tools</div>
+						<ul class="mt-1 list-inside list-disc text-xs">
+							@for (t of cfg.allowedTools; track t.toolId) {
+								<li class="flex flex-wrap gap-1">
+									<span class="font-mono">{{ t.toolId }}</span>
+									<app-admin-risk-badge [risk]="t.riskLevel" />
+									@if (t.requiresApproval) {
+										<span class="text-amber-700">approval</span>
+									}
+								</li>
+							}
+						</ul>
+					</div>
+					<div>
+						<div class="text-xs font-semibold text-slate-500">Denied tools</div>
+						<p class="font-mono text-xs">{{ cfg.deniedTools.join(', ') }}</p>
+					</div>
+					<div>
+						<div class="text-xs font-semibold text-slate-500">Knowledge sources</div>
+						<ul class="list-inside list-disc text-xs">
+							@for (k of cfg.knowledgeSources; track k.id) {
+								<li>{{ k.name }} ({{ k.type }})</li>
+							}
+						</ul>
+					</div>
+					<div>
+						<div class="text-xs font-semibold text-slate-500">Approval rules</div>
+						<p class="font-mono text-xs">{{ cfg.requiresApprovalFor.join(', ') || '—' }}</p>
+					</div>
+					<div>
+						<div class="text-xs font-semibold text-slate-500">Artifacts</div>
+						<p class="text-xs">{{ cfg.outputArtifactTypes.join(', ') }}</p>
+					</div>
+				</div>
+			} @else {
+				<p class="text-sm text-slate-600">No bundled config for this slug.</p>
+			}
+		}
+	</p-dialog>
+</div>

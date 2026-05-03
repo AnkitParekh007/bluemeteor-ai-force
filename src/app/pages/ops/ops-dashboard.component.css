@@ -1,0 +1,51 @@
+.ops-wrap {
+	padding: 1.5rem;
+	max-width: 1100px;
+}
+
+.muted {
+	color: var(--bm-muted, #64748b);
+}
+
+.ops-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+}
+
+button {
+	padding: 0.35rem 0.75rem;
+	border-radius: 6px;
+	border: 1px solid var(--bm-border, #c4b5fd66);
+	background: var(--bm-surface, #fff);
+	cursor: pointer;
+	font-size: 0.85rem;
+}
+
+.btn-primary {
+	background: var(--bm-primary-soft, #ede9fe);
+	font-weight: 600;
+}
+
+pre {
+	background: var(--bm-surface-2, #0f172a0d);
+	padding: 1rem;
+	border-radius: 8px;
+	overflow: auto;
+	font-size: 0.8rem;
+	max-height: 320px;
+}
+
+section h2 {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	font-size: 1rem;
+	margin: 1.25rem 0 0.5rem;
+}
+
+section h2 button {
+	font-weight: 500;
+}

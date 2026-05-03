@@ -1,0 +1,55 @@
+<div class="flex h-full min-h-0 flex-col">
+	<div
+		class="flex shrink-0 flex-wrap gap-1 border-b border-slate-200/70 px-2 py-1.5 dark:border-slate-800"
+	>
+		@for (f of filters; track f) {
+			<button
+				type="button"
+				(click)="filter.set(f)"
+				class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+				[class.bg-violet-100]="filter() === f"
+				[class.text-violet-900]="filter() === f"
+				[class.dark:bg-indigo-900]="filter() === f"
+				[class.dark:text-white]="filter() === f"
+				[class.text-slate-500]="filter() !== f"
+			>
+				{{ f }}
+			</button>
+		}
+	</div>
+	<div
+		class="min-h-0 flex-1 overflow-y-auto bg-slate-950 px-2 py-2 font-mono text-[11px] leading-snug text-slate-200"
+		role="log"
+	>
+		@if (toolCalls().length) {
+			<div class="mb-2 border-b border-slate-800 pb-2 text-[10px] text-slate-400">
+				<span class="font-semibold uppercase tracking-wide text-cyan-400/90"
+					>Tool calls</span
+				>
+				@for (tc of toolCalls(); track tc.id) {
+					<div class="mt-1 border-l-2 border-cyan-700 pl-2 text-slate-300">
+						<span class="text-slate-500">{{
+							tc.startedAt ? (tc.startedAt | date: 'mediumTime') : '—'
+						}}</span>
+						<span class="ml-2 font-semibold text-cyan-200">{{ tc.name }}</span>
+						<span class="ml-2 text-slate-500">[{{ tc.status }}]</span>
+						@if (tc.error) {
+							<span class="ml-2 text-red-400">{{ tc.error }}</span>
+						}
+					</div>
+				}
+			</div>
+		}
+		@for (e of filtered(); track e.id) {
+			<div class="border-b border-slate-800/80 py-1">
+				<span class="text-slate-500">{{ e.createdAt | date: 'mediumTime' }}</span>
+				<span class="mx-2 text-slate-600">{{ e.source }}</span>
+				<span [ngClass]="levelClass(e.level)">[{{ e.level }}]</span>
+				<span class="ml-2 text-slate-200">{{ e.message }}</span>
+			</div>
+		}
+		@if (filtered().length === 0) {
+			<p class="py-6 text-center text-slate-500">No log lines for this filter.</p>
+		}
+	</div>
+</div>

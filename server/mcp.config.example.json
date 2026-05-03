@@ -1,0 +1,29 @@
+{
+  "servers": [
+    {
+      "id": "docs-filesystem",
+      "name": "Docs Filesystem MCP",
+      "description": "Read-only MCP server scoped to docs folder (enable locally only)",
+      "enabled": false,
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "./docs"],
+      "workingDirectory": ".",
+      "riskLevel": "medium",
+      "allowedTools": [],
+      "deniedTools": ["write_file", "delete_file", "move_file", "edit_file"],
+      "readOnly": true
+    },
+    {
+      "id": "demo-docs",
+      "name": "Demo MCP (in-process)",
+      "description": "No stdio spawn — deterministic tools for local demos when ENABLE_MCP_ADAPTER=true",
+      "enabled": false,
+      "mockOnly": true,
+      "transport": "stdio",
+      "riskLevel": "low",
+      "readOnly": true,
+      "deniedTools": ["write_file", "delete_file"]
+    }
+  ]
+}

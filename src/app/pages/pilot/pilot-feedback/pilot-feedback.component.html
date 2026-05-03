@@ -1,0 +1,13 @@
+<div class="max-w-2xl space-y-4">
+	<p class="text-sm text-slate-600 dark:text-slate-400">
+		Structured pilot feedback is stored for aggregate metrics. Optional session, run, and trace IDs help correlate
+		with support tickets — never paste secrets.
+	</p>
+	<app-pilot-feedback-form
+		[defaultUserRole]="defaultRole()"
+		[defaultAgentSlug]="agentFromQuery()"
+		[sessionId]="sessionId() || undefined"
+		[runId]="runId() || undefined"
+		[traceId]="traceId() || undefined"
+	/>
+</div>

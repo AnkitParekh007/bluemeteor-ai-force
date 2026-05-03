@@ -1,0 +1,76 @@
+{
+  "tickets": [
+    {
+      "id": "BM-2041",
+      "title": "Supplier upload failed — CSV rejected at row 842",
+      "description": "Customer reports upload stalls at validation; error mentions duplicate SKU in column F.",
+      "status": "open",
+      "priority": "high",
+      "area": "supplier-portal",
+      "createdAt": "2026-04-28T10:15:00.000Z"
+    },
+    {
+      "id": "BM-2035",
+      "title": "Login issue — SSO redirect loop for vendor acme",
+      "description": "After IdP success, user lands back on login. Suspect callback URL mismatch for tenant acme.",
+      "status": "in_progress",
+      "priority": "urgent",
+      "area": "auth",
+      "createdAt": "2026-04-27T08:40:00.000Z"
+    },
+    {
+      "id": "BM-2029",
+      "title": "Missing SKU status after nightly syndication",
+      "description": "Several SKUs show blank status in portal while ERP shows active. Syndication job 4412 may be partial.",
+      "status": "open",
+      "priority": "medium",
+      "area": "syndication",
+      "createdAt": "2026-04-26T16:22:00.000Z"
+    },
+    {
+      "id": "BM-2018",
+      "title": "Syndication delay — queue depth > 2h SLA",
+      "description": "Metrics show backlog growing; no failures in worker logs yet.",
+      "status": "in_progress",
+      "priority": "high",
+      "area": "syndication",
+      "createdAt": "2026-04-25T09:05:00.000Z"
+    },
+    {
+      "id": "BM-2011",
+      "title": "Dashboard statistics mismatch vs BI export",
+      "description": "Portal tile shows 12% higher upload success than warehouse BI for same date range.",
+      "status": "open",
+      "priority": "medium",
+      "area": "analytics",
+      "createdAt": "2026-04-24T13:50:00.000Z"
+    },
+    {
+      "id": "BM-2004",
+      "title": "Upload retry stuck in processing",
+      "description": "Job uj_8891 has been processing for 45 minutes; worker heartbeat OK.",
+      "status": "open",
+      "priority": "medium",
+      "area": "uploads",
+      "createdAt": "2026-04-23T11:18:00.000Z"
+    },
+    {
+      "id": "BM-1998",
+      "title": "Documented workaround for UTF-8 BOM in supplier CSV",
+      "description": "KB draft: strip BOM before upload or use template v3.",
+      "status": "resolved",
+      "priority": "low",
+      "area": "docs",
+      "createdAt": "2026-04-20T15:00:00.000Z"
+    },
+    {
+      "id": "BM-1990",
+      "title": "Feature request: bulk download error report",
+      "description": "Suppliers want XLSX of failed rows after upload.",
+      "status": "closed",
+      "priority": "low",
+      "area": "supplier-portal",
+      "createdAt": "2026-04-18T09:30:00.000Z"
+    }
+  ]
+}

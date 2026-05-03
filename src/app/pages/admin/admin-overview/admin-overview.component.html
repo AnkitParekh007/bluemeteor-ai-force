@@ -1,0 +1,121 @@
+<div class="mx-auto max-w-6xl space-y-8">
+	<div>
+		<h1 class="text-xl font-semibold text-slate-900 dark:text-slate-100">Overview</h1>
+		<p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+			Platform status, approvals, and recent activity. Summary metrics require debug or admin permission.
+		</p>
+	</div>
+
+	<app-admin-permission-gate
+		[anyOf]="['system.debug.view', 'system.admin']"
+		[deniedMessage]="
+			'Sign in as a user with system.debug.view or system.admin to see aggregated platform metrics. Other admin sections remain available from the left nav.'
+		"
+	>
+		@if (loading()) {
+			<p class="text-sm text-slate-500">Loading summary…</p>
+		} @else if (summaryError()) {
+			<p class="text-sm text-red-700 dark:text-red-300">{{ summaryError() }}</p>
+		} @else if (summary()) {
+			<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+				<app-admin-stat-card label="Active users" [value]="activeUsersDisplay()" />
+				<app-admin-stat-card
+					label="Ready agents (priority)"
+					[value]="readyAgentsDisplay()"
+					[hint]="priorityAgentsHint()"
+				/>
+				<app-admin-stat-card label="Pending approvals" [value]="approvalsPending()" />
+				<app-admin-stat-card label="Failed runs today" [value]="failedRunsTodayDisplay()" />
+				<app-admin-stat-card label="Tool failures today" [value]="toolFailuresTodayDisplay()" />
+				<app-admin-stat-card label="Eval avg score" [value]="evalAverageDisplay()" />
+				<app-admin-stat-card label="Database" [value]="databaseDisplay()" />
+				<app-admin-stat-card
+					label="Production safety"
+					[value]="prodSafetyOk() ? 'OK' : 'Review'"
+					[hint]="prodSafetyHint()"
+				/>
+			</div>
+
+			<section class="mt-8 space-y-3">
+				<app-admin-section-header
+					title="Platform status"
+					subtitle="Provider, MCP, connectors — safe high-level signals only."
+				/>
+				<div class="grid gap-3 md:grid-cols-3">
+					<div class="rounded-lg border border-slate-200/80 bg-white/90 p-3 text-sm dark:border-slate-700 dark:bg-slate-900/80">
+						<div class="text-xs font-semibold text-slate-500">Provider</div>
+						<pre class="mt-2 max-h-40 overflow-auto text-xs">{{
+							summary()!['provider'] | json
+						}}</pre>
+					</div>
+					<div class="rounded-lg border border-slate-200/80 bg-white/90 p-3 text-sm dark:border-slate-700 dark:bg-slate-900/80">
+						<div class="text-xs font-semibold text-slate-500">MCP</div>
+						<pre class="mt-2 max-h-40 overflow-auto text-xs">{{ summary()!['mcp'] | json }}</pre>
+					</div>
+					<div class="rounded-lg border border-slate-200/80 bg-white/90 p-3 text-sm dark:border-slate-700 dark:bg-slate-900/80">
+						<div class="text-xs font-semibold text-slate-500">Connectors</div>
+						<pre class="mt-2 max-h-40 overflow-auto text-xs">{{ summary()!['connectors'] | json }}</pre>
+					</div>
+				</div>
+			</section>
+
+			<section class="mt-8 space-y-3">
+				<app-admin-section-header title="Agent health (priority)" />
+				<div class="overflow-x-auto rounded-lg border border-slate-200/80 dark:border-slate-700">
+					<table class="w-full min-w-[640px] text-left text-xs">
+						<thead class="bg-slate-100/80 dark:bg-slate-800/80">
+							<tr>
+								<th class="px-2 py-2">Agent</th>
+								<th class="px-2 py-2">Score</th>
+								<th class="px-2 py-2">Checks</th>
+							</tr>
+						</thead>
+						<tbody>
+							@for (row of readinessRows(); track row['slug']) {
+								<tr class="border-t border-slate-200/70 dark:border-slate-700">
+									<td class="px-2 py-1.5 font-medium">{{ row['slug'] }}</td>
+									<td class="px-2 py-1.5">{{ row['score'] }}</td>
+									<td class="px-2 py-1.5 text-slate-600 dark:text-slate-400">
+										{{ checkCount(row) }} checks
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<section class="mt-8 space-y-3">
+				<app-admin-section-header
+					title="Recent activity"
+					subtitle="Latest audit rows (no sensitive payloads)."
+				/>
+				<ul class="space-y-2">
+					@for (ev of recentActivity(); track ev['id']) {
+						<li
+							class="flex flex-wrap items-center gap-2 rounded-md border border-slate-200/70 bg-white/80 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-900/60"
+						>
+							<span class="font-mono text-[11px] text-slate-500">{{ ev['createdAt'] }}</span>
+							<app-admin-status-badge [status]="str(ev['action'])" variant="neutral" />
+							<span>{{ ev['actorEmail'] || '—' }}</span>
+							<span class="text-slate-500">{{ ev['agentSlug'] || '' }}</span>
+						</li>
+					}
+				</ul>
+			</section>
+
+			<section class="mt-8 space-y-3">
+				<app-admin-section-header title="Recommended next actions" />
+				<ul class="list-inside list-disc text-sm text-slate-700 dark:text-slate-300">
+					@if (approvalsPending() > 0) {
+						<li>Review {{ approvalsPending() }} pending approval(s) in Approvals.</li>
+					}
+					@if (!prodSafetyOk()) {
+						<li>Review production safety / startup validation warnings in Ops.</li>
+					}
+					<li>Run readiness and evaluations before pilot traffic.</li>
+				</ul>
+			</section>
+		}
+	</app-admin-permission-gate>
+</div>

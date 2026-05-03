@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+**/.env
+**/.env.*
+!**/.env.example
+server/storage
+server/prisma/dev.db
+*.log
+.cursor
+.vscode

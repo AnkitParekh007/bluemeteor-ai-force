@@ -1,0 +1,53 @@
+<div class="prose prose-sm max-w-none space-y-8 text-slate-800 dark:prose-invert dark:text-slate-100">
+	<section>
+		<h2 class="text-lg font-semibold">General</h2>
+		<ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-400">
+			<li>Agent outputs require human review before merge, send, or production use.</li>
+			<li>Agents may be wrong, incomplete, or confidently incorrect.</li>
+			<li>Do not paste secrets, tokens, customer PII, or regulated data you would not put in an internal ticket.</li>
+			<li>Do not rely on generated code or SQL without review and testing.</li>
+		</ul>
+	</section>
+	<section>
+		<h2 class="text-lg font-semibold">Browser / Testo</h2>
+		<ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-400">
+			<li>Browser testing is intended for configured local or staging targets.</li>
+			<li>Production testing may be blocked by policy.</li>
+			<li>Some flows require manual login capture for authenticated sessions.</li>
+			<li>Generated Playwright specs should be reviewed before CI adoption.</li>
+		</ul>
+	</section>
+	<section>
+		<h2 class="text-lg font-semibold">Connectors</h2>
+		<ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-400">
+			<li>Some connectors may fall back to mock mode when credentials are missing.</li>
+			<li>Pilot posture is read-first; do not assume write actions to Jira/Confluence/etc.</li>
+			<li>No automated pull request creation from agents in this phase.</li>
+		</ul>
+	</section>
+	<section>
+		<h2 class="text-lg font-semibold">MCP</h2>
+		<ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-400">
+			<li>MCP tools are oriented read-only first; write-like tools remain gated or blocked.</li>
+		</ul>
+	</section>
+	<section>
+		<h2 class="text-lg font-semibold">Dato</h2>
+		<ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-400">
+			<li>SQL is generated for review only — no live execution against databases from the agent.</li>
+		</ul>
+	</section>
+	<section>
+		<h2 class="text-lg font-semibold">DevOpsy</h2>
+		<ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-400">
+			<li>Release checklists and pipeline review only — no deployment execution from the agent.</li>
+		</ul>
+	</section>
+	<section>
+		<h2 class="text-lg font-semibold">Security</h2>
+		<ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-400">
+			<li>Pilot is for internal, controlled usage.</li>
+			<li>Report permission issues, suspected data leaks, or policy bypasses immediately to your admin contact.</li>
+		</ul>
+	</section>
+</div>

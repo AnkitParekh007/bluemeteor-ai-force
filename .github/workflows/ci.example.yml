@@ -1,0 +1,19 @@
+# Example workflow — rename to ci.yml if using GitHub Actions.
+name: CI Example
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npm run build
+      - run: cd server && npm install && npx prisma validate && node scripts/sync-postgres-schema.mjs && npx prisma validate --schema=prisma/postgres/schema.prisma && npm run build

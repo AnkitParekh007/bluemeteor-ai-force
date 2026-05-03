@@ -1,0 +1,140 @@
+@let bs = browserState();
+
+<div class="flex h-full min-h-0 flex-col">
+	<div
+		class="flex flex-wrap items-center gap-1 border-b border-slate-200/80 bg-slate-100/80 px-2 py-1.5 dark:border-slate-800 dark:bg-slate-900/80"
+	>
+		<div class="flex items-center gap-0.5">
+			<button
+				type="button"
+				(click)="goBack()"
+				class="rounded p-1 text-slate-600 hover:bg-slate-200/80 dark:text-slate-400 dark:hover:bg-slate-800"
+				title="Back"
+				disabled
+				aria-label="Back"
+			>
+				<i class="pi pi-arrow-left text-xs"></i>
+			</button>
+			<button
+				type="button"
+				(click)="goForward()"
+				class="rounded p-1 text-slate-400 hover:bg-slate-200/80 dark:hover:bg-slate-800"
+				title="Forward"
+				disabled
+				aria-label="Forward"
+			>
+				<i class="pi pi-arrow-right text-xs"></i>
+			</button>
+			<button
+				type="button"
+				(click)="refresh()"
+				class="rounded p-1 text-slate-600 hover:bg-slate-200/80 dark:text-slate-400 dark:hover:bg-slate-800"
+				title="Refresh"
+				aria-label="Refresh"
+			>
+				<i class="pi pi-refresh text-xs"></i>
+			</button>
+		</div>
+		<div class="flex min-w-0 flex-1 items-center gap-1">
+			<i class="pi pi-lock text-[10px] text-emerald-600" aria-hidden="true"></i>
+			<input
+				type="text"
+				class="min-w-0 flex-1 rounded border border-slate-200/90 bg-white px-2 py-0.5 font-mono text-[11px] text-slate-800 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+				[value]="bs?.currentUrl ?? ''"
+				readonly
+				placeholder="about:blank"
+				aria-label="Address"
+			/>
+		</div>
+		<button
+			type="button"
+			(click)="openExternal()"
+			class="rounded p-1 text-slate-600 hover:bg-slate-200/80 dark:text-slate-400 dark:hover:bg-slate-800"
+			[disabled]="!bs?.currentUrl"
+			title="Open in new tab"
+		>
+			<i class="pi pi-external-link text-xs"></i>
+		</button>
+	</div>
+
+	<div
+		class="flex shrink-0 items-center gap-1 border-b border-slate-200/70 px-2 py-1 dark:border-slate-800"
+	>
+		<span
+			class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+			>Device</span
+		>
+		@for (d of ['desktop', 'tablet', 'mobile']; track d) {
+			<button
+				type="button"
+				(click)="device.set($any(d))"
+				class="rounded px-2 py-0.5 text-[10px] font-medium capitalize"
+				[class.bg-slate-200]="device() === d"
+				[class.text-slate-900]="device() === d"
+				[class.dark:bg-slate-800]="device() === d"
+				[class.dark:text-white]="device() === d"
+				[class.text-slate-500]="device() !== d"
+			>
+				{{ d }}
+			</button>
+		}
+	</div>
+
+	<div class="min-h-0 flex-1 overflow-hidden bg-slate-200/50 p-2 dark:bg-slate-950/50">
+		@if (!bs?.currentUrl) {
+			<div
+				class="flex h-full min-h-[200px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300/90 bg-white px-4 py-8 text-center dark:border-slate-700 dark:bg-slate-900/60"
+			>
+				<i class="pi pi-desktop text-3xl text-slate-400"></i>
+				<div>
+					<p class="text-sm font-semibold text-slate-800 dark:text-slate-100">
+						No browser session started
+					</p>
+					<p class="mt-1 max-w-xs text-xs text-slate-600 dark:text-slate-400">
+						Agents like Testo can open app flows here for testing.
+					</p>
+				</div>
+				<button
+					type="button"
+					(click)="startPreview.emit()"
+					class="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-violet-500"
+				>
+					Start browser preview
+				</button>
+				<p class="max-w-sm text-[11px] text-slate-500 dark:text-slate-500">
+					Browser preview will appear here when this agent opens an app or test target.
+				</p>
+			</div>
+		} @else {
+			<div
+				class="flex h-full flex-col overflow-hidden rounded-lg border border-slate-300/80 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
+				[class.max-w-full]="device() === 'desktop'"
+				[class.mx-auto]="device() !== 'desktop'"
+				[style.max-width]="
+					device() === 'tablet' ? '768px' : device() === 'mobile' ? '390px' : '100%'
+				"
+			>
+				<div
+					class="min-h-0 flex-1 overflow-auto bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-950/50 dark:text-slate-300"
+				>
+					<p class="font-mono text-[10px] text-slate-500">
+						Mock preview — not a live iframe
+					</p>
+					<p class="mt-2 font-semibold text-slate-800 dark:text-slate-100">
+						{{ bs?.title || 'Page' }}
+					</p>
+					<p class="mt-1 break-all text-violet-700 dark:text-violet-300">
+						{{ bs?.currentUrl }}
+					</p>
+					<div
+						class="mt-4 rounded border border-violet-200/60 bg-white p-4 dark:border-indigo-900 dark:bg-slate-900"
+					>
+						<p class="text-sm text-slate-700 dark:text-slate-300">
+							Live embedding will connect here (Playwright / remote browser).
+						</p>
+					</div>
+				</div>
+			</div>
+		}
+	</div>
+</div>

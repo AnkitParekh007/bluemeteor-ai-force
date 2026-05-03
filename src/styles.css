@@ -1,0 +1,17 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+@import "primeicons/primeicons.css";
+
+/*
+  AI marketplace shell: cool lavender canvas, indigo/violet accents, cyan/teal actions.
+  Use with dashboard layout gradient + component tokens below.
+*/
+body {
+  margin: 0;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  @apply antialiased text-slate-800;
+}
+
+html.dark body {
+  @apply text-slate-100;
+}
