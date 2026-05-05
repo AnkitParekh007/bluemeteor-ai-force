@@ -173,31 +173,6 @@ flowchart LR
     Admin --> Ops[Readiness / Audit / Ops]
 ```
 
----
-
-## Screenshots
-
-Add screenshots or GIFs here to make the project recruiter-friendly.
-
-Recommended screenshots:
-
-```text
-docs/assets/screenshots/agent-workspace.png
-docs/assets/screenshots/admin-console.png
-docs/assets/screenshots/pilot-hub.png
-docs/assets/screenshots/tool-execution.png
-docs/assets/screenshots/readiness-dashboard.png
-```
-
-Example:
-
-```md
-![Agent Workspace](docs/assets/screenshots/agent-workspace.png)
-![Admin Console](docs/assets/screenshots/admin-console.png)
-```
-
----
-
 ## Project Structure
 
 ```text
