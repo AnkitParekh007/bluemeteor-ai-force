@@ -8,6 +8,7 @@ interface PilotNavLink {
 	readonly path: string;
 	readonly requiresMetrics?: boolean;
 	readonly requiresReadiness?: boolean;
+	readonly requiresImprovements?: boolean;
 }
 
 @Component({
@@ -26,6 +27,7 @@ export class PilotShellComponent {
 		{ label: 'Demo scripts', path: 'demo-scripts' },
 		{ label: 'Feedback', path: 'feedback' },
 		{ label: 'Metrics', path: 'metrics', requiresMetrics: true },
+		{ label: 'Improvements', path: 'improvements', requiresImprovements: true },
 		{ label: 'Limitations', path: 'known-limitations' },
 		{ label: 'Support', path: 'support' },
 		{ label: 'Readiness', path: 'readiness', requiresReadiness: true },
@@ -39,6 +41,12 @@ export class PilotShellComponent {
 			if (
 				l.requiresReadiness &&
 				!this.auth.hasAnyPermission('system.debug.view', 'agents.readiness.view', 'system.admin')
+			) {
+				return false;
+			}
+			if (
+				l.requiresImprovements &&
+				!this.auth.hasAnyPermission('agents.manage', 'agents.readiness.view', 'system.debug.view', 'system.admin')
 			) {
 				return false;
 			}

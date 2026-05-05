@@ -62,6 +62,9 @@ export class AdminShellComponent implements OnInit {
 		if (this.auth.hasPermission('agents.readiness.view')) {
 			items.push({ label: 'Readiness', path: 'readiness' });
 		}
+		if (this.auth.hasAnyPermission('agents.manage', 'agents.readiness.view', 'system.debug.view')) {
+			items.push({ label: 'Pilot improvements', path: '/pilot/improvements' });
+		}
 		return items;
 	});
 

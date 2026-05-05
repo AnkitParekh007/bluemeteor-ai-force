@@ -19,7 +19,7 @@ import type {
 	TriageStats,
 } from '../models/pilot-improvement.models';
 
-const BASE = `${environment.apiBaseUrl}/pilot-improvement`;
+const BASE = `${environment.agentApiBaseUrl.replace(/\/$/, '')}/pilot-improvement`;
 
 @Injectable({ providedIn: 'root' })
 export class PilotImprovementApiService {

@@ -12,10 +12,11 @@ interface RecommendationSpec {
 	category: ImprovementCategory;
 	priority: ImprovementPriority;
 	proposedChange: {
-		notes: string;
+		notes?: string;
 		promptTemplatePatch?: string;
 		workflowSuggestion?: string;
 		newEvaluationCase?: string;
+		skillPackSuggestion?: string;
 	};
 	expectedImpact: string;
 }

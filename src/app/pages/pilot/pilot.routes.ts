@@ -3,6 +3,14 @@ import type { Routes } from '@angular/router';
 import { permissionGuardAny } from '../../core/guards/permission.guard';
 
 export const pilotChildRoutes: Routes = [
+	{
+		path: 'improvements',
+		canActivate: [permissionGuardAny('agents.manage', 'agents.readiness.view', 'system.debug.view')],
+		loadComponent: () =>
+			import('./pilot-improvements/pilot-improvements.component').then(
+				(m) => m.PilotImprovementsComponent,
+			),
+	},
 	{ path: '', pathMatch: 'full', redirectTo: 'overview' },
 	{
 		path: 'overview',
