@@ -1,148 +1,430 @@
-<<<<<<< HEAD
-# BluemeteorAiForce
+# Org AI Force
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.9.
+**Enterprise Angular AI Agent Workspace with NestJS Orchestration, RAG, MCP Tools, SSE Streaming, Admin Console, and Internal Pilot Workflows.**
 
-## Development server
+Org AI Force is an internal AI workforce platform built to help enterprise teams interact with role-based AI agents inside a modern Angular workspace. It combines an **Angular 21 frontend**, **NestJS backend**, **agent orchestration**, **RAG**, **tool execution**, **MCP-style integrations**, **browser/test workers**, and an **admin console** for operating agents, tools, prompts, workflows, approvals, and pilot readiness.
 
-To start a local development server, run:
+---
+
+## Why This Project Exists
+
+Enterprise teams need AI assistants that do more than answer questions.
+
+This project explores how AI agents can work inside real business applications by combining:
+
+- Context-aware copilot interfaces
+- Role-based AI agents
+- Retrieval-augmented generation
+- Tool execution workflows
+- Streaming AI responses
+- Admin-governed approvals
+- Browser/test automation workers
+- Internal pilot operations
+- Observability and readiness checks
+
+The goal is to move from a simple chatbot to a practical **AI employee workspace** for enterprise operations.
+
+---
+
+## Key Capabilities
+
+### Agent Workspace
+
+- Angular-based multi-agent workspace
+- Role-based agent discovery and activation
+- Session-based agent conversations
+- Real-time streaming response UX
+- Tool call visibility and execution state tracking
+- Internal pilot experience for authenticated users
+
+### AI Orchestration
+
+- NestJS orchestrator for agent workflows
+- RAG-ready backend architecture
+- Tool registry and connector-ready design
+- MCP-style tool integration direction
+- Prompt, workflow, approval, and evaluation management
+- Support for LLM provider integration through backend services
+
+### Admin Console
+
+Available at:
+
+```text
+/admin
+````
+
+The admin console helps leads and admins operate the platform:
+
+* Overview dashboard
+* Agent management
+* User management
+* Tool registry
+* Connectors
+* MCP configuration
+* Prompt management
+* Skill packs
+* Workflows
+* Evaluations
+* Approvals
+* Audit views
+* Ops/readiness checks
+
+The console is permission-gated and avoids exposing raw secrets or credentials.
+
+### Internal Pilot Hub
+
+Available at:
+
+```text
+/pilot
+```
+
+The pilot hub provides a controlled rollout experience for authenticated users:
+
+* Pilot overview
+* Onboarding guidance
+* Agent usage guides
+* Demo scripts
+* Known limitations
+* Feedback collection
+* Support and escalation templates
+
+Additional pilot routes:
+
+```text
+/pilot/metrics
+/pilot/readiness
+```
+
+---
+
+## Tech Stack
+
+### Frontend
+
+* Angular 21
+* TypeScript
+* RxJS
+* Angular Router
+* PrimeNG / UI components
+* Tailwind CSS
+* Modular workspace architecture
+* Agent workspace UI
+* Admin and pilot dashboards
+
+### Backend
+
+* NestJS
+* Node.js
+* Prisma
+* REST APIs
+* Server-Sent Events
+* Authentication / authorization
+* Tool execution services
+* RAG-ready service layer
+* Evaluation and approval flows
+
+### AI / Agent Layer
+
+* LLM integration-ready architecture
+* RAG workflow direction
+* MCP-style tool integration
+* Agent orchestration
+* Tool registry
+* Prompt management
+* Skill packs
+* Workflow execution
+* Browser/test workers
+
+### Infrastructure
+
+* Docker
+* Docker Compose
+* PostgreSQL for pilot deployment
+* SQLite for local development
+* nginx reverse proxy
+* CI/CD-ready structure
+* Observability documentation
+
+---
+
+## Architecture Overview
+
+```mermaid
+flowchart LR
+    User[User / Team Member] --> Angular[Angular 21 Agent Workspace]
+
+    Angular --> Pilot[Pilot Hub]
+    Angular --> Admin[Admin Console]
+    Angular --> API[NestJS API]
+
+    API --> Auth[Auth / Permissions]
+    API --> Agent[Agent Orchestrator]
+    API --> Tools[Tool Registry]
+    API --> RAG[RAG / Knowledge Layer]
+    API --> MCP[MCP-style Integrations]
+    API --> Eval[Evaluation / Approval Layer]
+
+    Agent --> LLM[LLM Providers]
+    Tools --> Browser[Browser / Test Workers]
+    API --> DB[(Prisma + Database)]
+
+    Admin --> Ops[Readiness / Audit / Ops]
+```
+
+---
+
+## Screenshots
+
+Add screenshots or GIFs here to make the project recruiter-friendly.
+
+Recommended screenshots:
+
+```text
+docs/assets/screenshots/agent-workspace.png
+docs/assets/screenshots/admin-console.png
+docs/assets/screenshots/pilot-hub.png
+docs/assets/screenshots/tool-execution.png
+docs/assets/screenshots/readiness-dashboard.png
+```
+
+Example:
+
+```md
+![Agent Workspace](docs/assets/screenshots/agent-workspace.png)
+![Admin Console](docs/assets/screenshots/admin-console.png)
+```
+
+---
+
+## Project Structure
+
+```text
+.
+├── src/                      # Angular frontend application
+├── server/                   # NestJS backend API and orchestrator
+├── docs/                     # Deployment, pilot, admin, ops, and architecture docs
+├── docker-compose.yml        # Docker pilot setup
+├── nginx/                    # nginx reverse proxy configuration
+├── prisma/                   # Database schema and migrations, if configured at root
+├── .env.docker.example       # Docker environment template
+└── README.md
+```
+
+---
+
+## Getting Started
+
+### Option 1: Docker Pilot Setup
+
+Use this when you want the full pilot-style environment with PostgreSQL and nginx.
 
 ```bash
+cp .env.docker.example .env
+docker compose up --build
+```
+
+Then open:
+
+```text
+http://localhost:8080
+```
+
+The API is proxied at:
+
+```text
+/api
+```
+
+Useful docs:
+
+* [Deployment Guide](docs/deployment-guide.md)
+* [Database Operations](docs/database-operations.md)
+* [Observability](docs/observability.md)
+
+---
+
+### Option 2: Local Development
+
+Run the Angular frontend:
+
+```bash
+npm install
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Open:
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+```text
+http://localhost:4200
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Run the backend:
 
 ```bash
-ng generate --help
+cd server
+npm install
+npm run start:dev
 ```
 
-## Building
+Default local database:
 
-To build the project run:
-
-```bash
-ng build
+```text
+SQLite: file:./dev.db
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+---
 
-## Running unit tests
+## Common Commands
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
-=======
-# Bluemeteor AI Force
-
-Internal **Angular 21** agent workspace + **NestJS** orchestrator (Prisma, SSE, RAG, tools, connectors, browser/test workers). See `server/README.md` for API detail.
-
-## Docker pilot (PostgreSQL + nginx)
-
-1. Copy `.env.docker.example` → `.env` (repo root) and set secrets.
-2. `docker compose up --build`
-3. App: `http://localhost:8080` — API proxied at `/api`.
-
-Docs: [`docs/deployment-guide.md`](docs/deployment-guide.md), [`docs/database-operations.md`](docs/database-operations.md), [`docs/observability.md`](docs/observability.md).
-
-## Admin Console
-
-Leads and admins can operate the platform from **`/admin`** (overview, agents, users, tools, connectors, MCP, prompts, skill packs, workflows, evaluations, approvals, audit, ops, readiness). The console is permission-gated and does not show secrets or raw credentials. See [`docs/admin-console-guide.md`](docs/admin-console-guide.md) and [`docs/internal-pilot-readiness.md`](docs/internal-pilot-readiness.md).
-
-## Internal pilot hub
-
-Controlled internal pilot UX lives at **`/pilot`** (all authenticated users): overview, onboarding, agent guides, demo scripts, feedback form, known limitations, and support/escalation templates.
-
-- **Metrics:** `/pilot/metrics` — `system.debug.view` or `system.admin`.
-- **Readiness gate & report:** `/pilot/readiness` — `system.debug.view`, `agents.readiness.view`, or `system.admin`.
-- **Feedback API:** `POST /pilot/feedback` (authenticated); listing `GET /pilot/feedback` is admin/debug only.
-
-Docs: [`docs/internal-pilot-launch-plan.md`](docs/internal-pilot-launch-plan.md), [`docs/pilot-user-guide.md`](docs/pilot-user-guide.md), [`docs/pilot-admin-guide.md`](docs/pilot-admin-guide.md), [`docs/pilot-demo-script.md`](docs/pilot-demo-script.md), [`docs/pilot-sample-prompts.md`](docs/pilot-sample-prompts.md), [`docs/pilot-success-metrics.md`](docs/pilot-success-metrics.md).
-
-## Local development
-
-- Frontend: `ng serve` → `http://localhost:4200`
-- Backend: `cd server && npm run start:dev` — default SQLite `file:./dev.db`
-
-## Development server (Angular CLI)
-
-To start a local development server, run:
+### Frontend
 
 ```bash
 ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
 ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
 ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
 ng e2e
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+### Backend
 
-## Additional Resources
+```bash
+cd server
+npm run start:dev
+npm run build
+npm run test
+```
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
->>>>>>> master
+### Docker
+
+```bash
+docker compose up --build
+docker compose down
+```
+
+---
+
+## Environment Setup
+
+Create a local `.env` file from the example file:
+
+```bash
+cp .env.docker.example .env
+```
+
+Typical environment areas:
+
+```text
+DATABASE_URL=
+JWT_SECRET=
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+MCP_SERVER_URL=
+APP_BASE_URL=
+API_BASE_URL=
+```
+
+Do not commit real secrets.
+
+---
+
+## Important Routes
+
+### Application Routes
+
+```text
+/                  Main application workspace
+/admin             Admin console
+/pilot             Internal pilot hub
+/pilot/metrics     Pilot metrics
+/pilot/readiness   Pilot readiness gate and report
+```
+
+### Pilot API
+
+```text
+POST /pilot/feedback
+GET  /pilot/feedback
+```
+
+`POST /pilot/feedback` is available to authenticated users.
+
+`GET /pilot/feedback` is restricted to admin/debug roles.
+
+---
+
+## Documentation
+
+### Admin and Operations
+
+* [Admin Console Guide](docs/admin-console-guide.md)
+* [Internal Pilot Readiness](docs/internal-pilot-readiness.md)
+* [Observability](docs/observability.md)
+
+### Pilot Rollout
+
+* [Internal Pilot Launch Plan](docs/internal-pilot-launch-plan.md)
+* [Pilot User Guide](docs/pilot-user-guide.md)
+* [Pilot Admin Guide](docs/pilot-admin-guide.md)
+* [Pilot Demo Script](docs/pilot-demo-script.md)
+* [Pilot Sample Prompts](docs/pilot-sample-prompts.md)
+* [Pilot Success Metrics](docs/pilot-success-metrics.md)
+
+### Deployment and Database
+
+* [Deployment Guide](docs/deployment-guide.md)
+* [Database Operations](docs/database-operations.md)
+
+---
+
+## Security and Governance
+
+This project is designed with enterprise AI governance in mind:
+
+* Authenticated access for pilot users
+* Permission-gated admin console
+* Restricted metrics and readiness routes
+* No raw credential display in the UI
+* Approval-oriented workflow direction
+* Audit and ops views for admin users
+* Environment-based secret management
+
+Recommended production hardening:
+
+* Use strong JWT secrets
+* Store secrets in a secure vault
+* Enforce HTTPS
+* Add rate limiting
+* Add request validation
+* Add tenant-aware access controls
+* Add audit logs for sensitive tool execution
+* Use least-privilege permissions for tools and connectors
+---
+
+## Roadmap
+
+### Current Focus
+
+* Internal pilot workspace
+* Admin console
+* Agent management
+* Tool registry
+* Prompt and workflow management
+* Feedback collection
+* Pilot readiness reporting
+
+### Next Improvements
+
+* Add polished public demo screenshots
+* Add live walkthrough video
+* Improve agent session replay
+* Add richer RAG source citation UI
+* Add MCP tool execution examples
+* Add Playwright-based browser worker demos
+* Add evaluation dashboards
+* Add multi-tenant governance layer
+* Add CI/CD deployment examples
+* Add test coverage reports
+
+---
