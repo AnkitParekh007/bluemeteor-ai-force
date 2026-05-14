@@ -116,6 +116,48 @@
 					<li>Run readiness and evaluations before pilot traffic.</li>
 				</ul>
 			</section>
+
+			<section class="mt-8 space-y-3">
+				<app-admin-section-header
+					title="Visible demo data"
+					subtitle="Mock tools, workflows, approvals, and pilot operations artifacts used in the prototype."
+				/>
+				<div class="grid gap-3 lg:grid-cols-3">
+					<div class="rounded-lg border border-slate-200/80 bg-white/90 p-3 text-sm dark:border-slate-700 dark:bg-slate-900/80">
+						<div class="text-xs font-semibold text-slate-500">Mock tools</div>
+						<ul class="mt-2 space-y-2 text-xs">
+							@for (tool of mockTools; track tool.id) {
+								<li>
+									<div class="font-medium">{{ tool.name }}</div>
+									<div class="text-slate-500">{{ tool.category }} · {{ tool.riskLevel }} risk</div>
+								</li>
+							}
+						</ul>
+					</div>
+					<div class="rounded-lg border border-slate-200/80 bg-white/90 p-3 text-sm dark:border-slate-700 dark:bg-slate-900/80">
+						<div class="text-xs font-semibold text-slate-500">Mock workflows</div>
+						<ul class="mt-2 space-y-2 text-xs">
+							@for (workflow of mockWorkflows; track workflow.id) {
+								<li>
+									<div class="font-medium">{{ workflow.name }}</div>
+									<div class="text-slate-500">{{ workflow.mode }} · {{ workflow.steps.length }} steps</div>
+								</li>
+							}
+						</ul>
+					</div>
+					<div class="rounded-lg border border-slate-200/80 bg-white/90 p-3 text-sm dark:border-slate-700 dark:bg-slate-900/80">
+						<div class="text-xs font-semibold text-slate-500">Mock approvals</div>
+						<ul class="mt-2 space-y-2 text-xs">
+							@for (approval of mockApprovals; track approval.id) {
+								<li>
+									<div class="font-medium">{{ approval.title }}</div>
+									<div class="text-slate-500">{{ approval.owner }} · {{ approval.status }}</div>
+								</li>
+							}
+						</ul>
+					</div>
+				</div>
+			</section>
 		}
 	</app-admin-permission-gate>
 </div>

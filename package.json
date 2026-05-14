@@ -7,6 +7,10 @@
     "start:web": "ng serve",
     "start:server": "npm run start:dev --prefix server",
     "build": "ng build",
+    "build:frontend": "ng build",
+    "build:backend": "npm run build --prefix server",
+    "validate:docker": "docker compose config",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "generate:agent-card-images": "node scripts/generate-agent-card-images.mjs"

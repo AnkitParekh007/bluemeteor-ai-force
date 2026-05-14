@@ -7,6 +7,11 @@ import { AdminPermissionGateComponent } from '../components/admin-permission-gat
 import { AdminSectionHeaderComponent } from '../components/admin-section-header.component';
 import { AdminStatCardComponent } from '../components/admin-stat-card.component';
 import { AdminStatusBadgeComponent } from '../components/admin-status-badge.component';
+import {
+	MOCK_ENTERPRISE_APPROVALS,
+	MOCK_ENTERPRISE_TOOLS,
+	MOCK_ENTERPRISE_WORKFLOWS,
+} from '../../../core/data/mock-enterprise-demo-data';
 
 @Component({
 	selector: 'app-admin-overview',
@@ -28,6 +33,9 @@ export class AdminOverviewComponent implements OnInit {
 	protected readonly summary = signal<Record<string, unknown> | null>(null);
 	protected readonly summaryError = signal<string | null>(null);
 	protected readonly loading = signal(false);
+	protected readonly mockTools = MOCK_ENTERPRISE_TOOLS;
+	protected readonly mockWorkflows = MOCK_ENTERPRISE_WORKFLOWS;
+	protected readonly mockApprovals = MOCK_ENTERPRISE_APPROVALS;
 
 	readonly canSummary = () => this.auth.hasAnyPermission('system.debug.view', 'system.admin');
 

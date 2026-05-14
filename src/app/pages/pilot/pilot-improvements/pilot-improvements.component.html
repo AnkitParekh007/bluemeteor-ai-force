@@ -38,13 +38,7 @@
 
   <!-- Nav tabs -->
   <div class="flex gap-1 border-b border-slate-200 dark:border-slate-700">
-    @for (tab of [
-      {id: 'overview', label: 'Overview'},
-      {id: 'triage', label: 'Feedback queue'},
-      {id: 'backlog', label: 'Improvement backlog'},
-      {id: 'regression', label: 'Agent regression'},
-      {id: 'report', label: 'Improvement report'}
-    ]; track tab.id) {
+    @for (tab of viewTabs; track tab.id) {
       <button
         (click)="setView(tab.id)"
         [class.border-violet-600]="view() === tab.id"

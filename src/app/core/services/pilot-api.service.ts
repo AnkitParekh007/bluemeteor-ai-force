@@ -3,6 +3,11 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import {
+	MOCK_PILOT_FEEDBACK,
+	MOCK_PILOT_METRICS,
+	MOCK_PILOT_READINESS,
+} from '../data/mock-enterprise-demo-data';
 import type { PilotFeedbackPayload } from '../models/pilot.models';
 import { AuthTokenService } from './auth-token.service';
 
@@ -29,18 +34,44 @@ export class PilotApiService {
 	}
 
 	getMetrics(): Observable<Record<string, unknown>> {
+		if (environment.enableMockAgents) {
+			return new Observable((subscriber) => {
+				subscriber.next({ metrics: MOCK_PILOT_METRICS });
+				subscriber.complete();
+			});
+		}
 		return this.http.get<Record<string, unknown>>(`${this.base()}/pilot/metrics`, {
 			headers: this.headers(),
 		});
 	}
 
 	getReadiness(): Observable<Record<string, unknown>> {
+		if (environment.enableMockAgents) {
+			return new Observable((subscriber) => {
+				subscriber.next({ checks: MOCK_PILOT_READINESS });
+				subscriber.complete();
+			});
+		}
 		return this.http.get<Record<string, unknown>>(`${this.base()}/pilot/readiness`, {
 			headers: this.headers(),
 		});
 	}
 
 	getReport(): Observable<PilotReportResponse> {
+		if (environment.enableMockAgents) {
+			return new Observable((subscriber) => {
+				subscriber.next({
+					markdown:
+						'# Pilot Report\n\n- Readiness: warning\n- Feedback volume: healthy\n- Next action: improve recovery UX and approval auditability.',
+					data: {
+						metrics: MOCK_PILOT_METRICS,
+						readiness: MOCK_PILOT_READINESS,
+						feedback: MOCK_PILOT_FEEDBACK,
+					},
+				});
+				subscriber.complete();
+			});
+		}
 		return this.http.get<PilotReportResponse>(`${this.base()}/pilot/report`, { headers: this.headers() });
 	}
 
@@ -51,6 +82,12 @@ export class PilotApiService {
 		readonly from?: string;
 		readonly to?: string;
 	}): Observable<unknown> {
+		if (environment.enableMockAgents) {
+			return new Observable((subscriber) => {
+				subscriber.next({ items: MOCK_PILOT_FEEDBACK });
+				subscriber.complete();
+			});
+		}
 		let hp = new HttpParams();
 		if (params?.limit != null) hp = hp.set('limit', String(params.limit));
 		if (params?.agentSlug) hp = hp.set('agentSlug', params.agentSlug);

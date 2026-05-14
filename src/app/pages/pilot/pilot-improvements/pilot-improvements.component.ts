@@ -49,6 +49,14 @@ const STATUS_COLORS: Record<string, string> = {
 	closed: 'bg-slate-100 text-slate-500',
 };
 
+const VIEW_TABS: ReadonlyArray<{ id: View; label: string }> = [
+	{ id: 'overview', label: 'Overview' },
+	{ id: 'triage', label: 'Feedback queue' },
+	{ id: 'backlog', label: 'Improvement backlog' },
+	{ id: 'regression', label: 'Agent regression' },
+	{ id: 'report', label: 'Improvement report' },
+];
+
 @Component({
 	selector: 'app-pilot-improvements',
 	standalone: true,
@@ -87,6 +95,7 @@ export class PilotImprovementsComponent implements OnInit {
 	protected readonly agentSlugs = AGENT_SLUGS;
 	protected readonly severityColors = SEVERITY_COLORS;
 	protected readonly statusColors = STATUS_COLORS;
+	protected readonly viewTabs = VIEW_TABS;
 
 	protected readonly overviewCards = computed(() => {
 		const ts = this.triageStats();

@@ -12,6 +12,12 @@ import type {
 } from '../models/agent-intelligence.models';
 import type { ConnectorDefinition, ConnectorHealth } from '../models/connector.models';
 import type { ToolDefinition } from '../models/tool-definition.models';
+import {
+	MOCK_ADMIN_SUMMARY,
+	MOCK_CONNECTORS,
+	MOCK_ENTERPRISE_TOOLS,
+	MOCK_ENTERPRISE_WORKFLOWS,
+} from '../data/mock-enterprise-demo-data';
 import { AgentApiService } from './agent-api.service';
 import { AgentIntelligenceApiService } from './agent-intelligence-api.service';
 import { AuthApiService } from './auth-api.service';
@@ -41,6 +47,10 @@ export class AdminApiService {
 	}
 
 	getAdminSummary(): Observable<AdminSummaryDto> {
+		if (environment.enableMockAgents) return new Observable((subscriber) => {
+			subscriber.next(MOCK_ADMIN_SUMMARY);
+			subscriber.complete();
+		});
 		return this.http.get<AdminSummaryDto>(`${this.base()}/admin/summary`, { headers: this.headers() });
 	}
 
@@ -67,6 +77,10 @@ export class AdminApiService {
 	}
 
 	getTools(): Observable<ToolDefinition[]> {
+		if (environment.enableMockAgents) return new Observable((subscriber) => {
+			subscriber.next([...MOCK_ENTERPRISE_TOOLS]);
+			subscriber.complete();
+		});
 		return this.http.get<ToolDefinition[]>(`${this.base()}/tools`, { headers: this.headers() });
 	}
 
@@ -77,6 +91,10 @@ export class AdminApiService {
 	}
 
 	listConnectorDefinitions(): Observable<ConnectorDefinition[]> {
+		if (environment.enableMockAgents) return new Observable((subscriber) => {
+			subscriber.next([...MOCK_CONNECTORS]);
+			subscriber.complete();
+		});
 		return this.connectors.listConnectors();
 	}
 
@@ -109,6 +127,16 @@ export class AdminApiService {
 	}
 
 	getWorkflows(agentSlug?: string): Observable<AgentWorkflowTemplate[]> {
+		if (environment.enableMockAgents) {
+			return new Observable((subscriber) => {
+				subscriber.next(
+					MOCK_ENTERPRISE_WORKFLOWS.filter((workflow) =>
+						agentSlug ? workflow.agentSlug === agentSlug : true,
+					),
+				);
+				subscriber.complete();
+			});
+		}
 		return this.intel.listWorkflows(agentSlug);
 	}
 

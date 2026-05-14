@@ -1,405 +1,181 @@
 # Org AI Force
 
-**Enterprise Angular AI Agent Workspace with NestJS Orchestration, RAG, MCP Tools, SSE Streaming, Admin Console, and Internal Pilot Workflows.**
+Enterprise Angular 21 agent workspace prototype with a NestJS orchestrator, admin-governed tools, RAG-ready services, MCP-style integrations, SSE streaming hooks, Playwright/browser workers, and internal pilot operations.
 
-Org AI Force is an internal AI workforce platform built to help enterprise teams interact with role-based AI agents inside a modern Angular workspace. It combines an **Angular 21 frontend**, **NestJS backend**, **agent orchestration**, **RAG**, **tool execution**, **MCP-style integrations**, **browser/test workers**, and an **admin console** for operating agents, tools, prompts, workflows, approvals, and pilot readiness.
+This repo is a **prototype and architecture proof project**, not a claim of production enterprise adoption. It is designed to show how an internal AI agent workspace could be structured across frontend, backend, admin governance, and pilot rollout concerns.
 
----
+## What Is Implemented Vs Mock Vs Planned
 
-## Why This Project Exists
+### Implemented
 
-Enterprise teams need AI assistants that do more than answer questions.
+- Angular 21 workspace shell with routes for agents, admin, pilot, ops, logs, readiness, and debug tools
+- NestJS server modules for auth, agents, tools, RAG, connectors, pilot ops, observability, and browser workers
+- role and permission guards for the frontend and backend
+- Docker and Docker Compose setup for a local or pilot-style environment
+- Prisma schemas for SQLite and PostgreSQL-oriented deployment paths
+- mock-safe workspace behavior for agent sessions, artifacts, tool events, approvals, and test-worker style flows
 
-This project explores how AI agents can work inside real business applications by combining:
+### Mock Or Demo-Safe
 
-- Context-aware copilot interfaces
-- Role-based AI agents
-- Retrieval-augmented generation
-- Tool execution workflows
-- Streaming AI responses
-- Admin-governed approvals
-- Browser/test automation workers
-- Internal pilot operations
-- Observability and readiness checks
+- many agent responses and runtime events in frontend demo mode
+- demo tools, demo workflows, demo approvals, and pilot feedback seed data
+- browser and Playwright worker experience when used as a safe prototype path
+- some admin and pilot dashboard content when running without a fully wired backend stack
 
-The goal is to move from a simple chatbot to a practical **AI employee workspace** for enterprise operations.
+### Planned Or Still Maturing
 
----
+- deeper production-grade provider integration and hardening
+- fuller RAG citation and retrieval UX
+- richer evaluation dashboards and agent scorecards
+- multi-tenant controls and broader connector coverage
+- stronger production observability and automated validation coverage
 
-## Key Capabilities
-
-### Agent Workspace
-
-- Angular-based multi-agent workspace
-- Role-based agent discovery and activation
-- Session-based agent conversations
-- Real-time streaming response UX
-- Tool call visibility and execution state tracking
-- Internal pilot experience for authenticated users
-
-### AI Orchestration
-
-- NestJS orchestrator for agent workflows
-- RAG-ready backend architecture
-- Tool registry and connector-ready design
-- MCP-style tool integration direction
-- Prompt, workflow, approval, and evaluation management
-- Support for LLM provider integration through backend services
-
-### Admin Console
-
-Available at:
-
-```text
-/admin
-````
-
-The admin console helps leads and admins operate the platform:
-
-* Overview dashboard
-* Agent management
-* User management
-* Tool registry
-* Connectors
-* MCP configuration
-* Prompt management
-* Skill packs
-* Workflows
-* Evaluations
-* Approvals
-* Audit views
-* Ops/readiness checks
-
-The console is permission-gated and avoids exposing raw secrets or credentials.
-
-### Internal Pilot Hub
-
-Available at:
-
-```text
-/pilot
-```
-
-The pilot hub provides a controlled rollout experience for authenticated users:
-
-* Pilot overview
-* Onboarding guidance
-* Agent usage guides
-* Demo scripts
-* Known limitations
-* Feedback collection
-* Support and escalation templates
-
-Additional pilot routes:
-
-```text
-/pilot/metrics
-/pilot/readiness
-```
-
----
-
-## Tech Stack
-
-### Frontend
-
-* Angular 21
-* TypeScript
-* RxJS
-* Angular Router
-* PrimeNG / UI components
-* Tailwind CSS
-* Modular workspace architecture
-* Agent workspace UI
-* Admin and pilot dashboards
-
-### Backend
-
-* NestJS
-* Node.js
-* Prisma
-* REST APIs
-* Server-Sent Events
-* Authentication / authorization
-* Tool execution services
-* RAG-ready service layer
-* Evaluation and approval flows
-
-### AI / Agent Layer
-
-* LLM integration-ready architecture
-* RAG workflow direction
-* MCP-style tool integration
-* Agent orchestration
-* Tool registry
-* Prompt management
-* Skill packs
-* Workflow execution
-* Browser/test workers
-
-### Infrastructure
-
-* Docker
-* Docker Compose
-* PostgreSQL for pilot deployment
-* SQLite for local development
-* nginx reverse proxy
-* CI/CD-ready structure
-* Observability documentation
-
----
-
-## Architecture Overview
+## Architecture
 
 ```mermaid
 flowchart LR
-    User[User / Team Member] --> Angular[Angular 21 Agent Workspace]
+    User["Internal user"] --> Frontend["Angular 21 workspace"]
+    Frontend --> Agents["Agent workspace routes"]
+    Frontend --> Admin["Admin console"]
+    Frontend --> Pilot["Pilot hub"]
+    Frontend --> Ops["Ops and readiness views"]
+    Frontend --> Api["NestJS orchestrator API"]
 
-    Angular --> Pilot[Pilot Hub]
-    Angular --> Admin[Admin Console]
-    Angular --> API[NestJS API]
-
-    API --> Auth[Auth / Permissions]
-    API --> Agent[Agent Orchestrator]
-    API --> Tools[Tool Registry]
-    API --> RAG[RAG / Knowledge Layer]
-    API --> MCP[MCP-style Integrations]
-    API --> Eval[Evaluation / Approval Layer]
-
-    Agent --> LLM[LLM Providers]
-    Tools --> Browser[Browser / Test Workers]
-    API --> DB[(Prisma + Database)]
-
-    Admin --> Ops[Readiness / Audit / Ops]
+    Api --> Auth["Auth and RBAC"]
+    Api --> Orchestrator["Agent orchestration"]
+    Api --> RAG["RAG and context layer"]
+    Api --> Tools["Tool registry and approvals"]
+    Api --> MCP["MCP-style integrations"]
+    Api --> Browser["Browser and Playwright workers"]
+    Api --> Observability["Metrics, readiness, logs"]
+    Api --> Data["Prisma with SQLite or PostgreSQL"]
 ```
 
-## Project Structure
+## Local Docker Quick Start
 
-```text
-.
-├── src/                      # Angular frontend application
-├── server/                   # NestJS backend API and orchestrator
-├── docs/                     # Deployment, pilot, admin, ops, and architecture docs
-├── docker-compose.yml        # Docker pilot setup
-├── nginx/                    # nginx reverse proxy configuration
-├── prisma/                   # Database schema and migrations, if configured at root
-├── .env.docker.example       # Docker environment template
-└── README.md
-```
-
----
-
-## Getting Started
-
-### Option 1: Docker Pilot Setup
-
-Use this when you want the full pilot-style environment with PostgreSQL and nginx.
+1. Copy the environment template:
 
 ```bash
 cp .env.docker.example .env
+```
+
+2. Set required values in `.env`, especially secrets such as `POSTGRES_PASSWORD`, JWT values, and provider keys when needed.
+
+3. Start the stack:
+
+```bash
 docker compose up --build
 ```
 
-Then open:
+4. Open the frontend:
 
 ```text
 http://localhost:8080
 ```
 
-The API is proxied at:
+Use local development instead if you want to run frontend and backend separately.
 
-```text
-/api
-```
+## Local Development
 
-Useful docs:
-
-* [Deployment Guide](docs/deployment-guide.md)
-* [Database Operations](docs/database-operations.md)
-* [Observability](docs/observability.md)
-
----
-
-### Option 2: Local Development
-
-Run the Angular frontend:
+Frontend:
 
 ```bash
 npm install
-ng serve
+npm start
 ```
 
-Open:
-
-```text
-http://localhost:4200
-```
-
-Run the backend:
+Backend:
 
 ```bash
 cd server
 npm install
-npm run start:dev
-```
-
-Default local database:
-
-```text
-SQLite: file:./dev.db
-```
-
----
-
-## Common Commands
-
-### Frontend
-
-```bash
-ng serve
-ng build
-ng test
-ng e2e
-```
-
-### Backend
-
-```bash
-cd server
-npm run start:dev
 npm run build
-npm run test
+npm run start:dev
 ```
 
-### Docker
+## Demo Routes
 
-```bash
-docker compose up --build
-docker compose down
-```
+- `/login`
+- `/dashboard`
+- `/agents`
+- `/agents/:slug`
+- `/admin`
+- `/pilot`
+- `/pilot/metrics`
+- `/pilot/readiness`
+- `/agent-readiness`
+- `/ops`
+- `/mcp-debug`
+- `/internal-tools-debug`
+- `/browser-test-debug`
 
----
+## Demo Surfaces
 
-## Environment Setup
+- agent workspace with chat, artifacts, approvals, tool window, and runtime events
+- admin overview with visible mock tools, workflows, approvals, and platform summary
+- pilot hub with rollout guidance, feedback loops, and readiness framing
+- readiness report showing priority-agent status
 
-Create a local `.env` file from the example file:
+## Screenshots And GIF Placeholders
 
-```bash
-cp .env.docker.example .env
-```
+Suggested assets:
 
-Typical environment areas:
+- `docs/assets/screenshots/workspace.png`
+- `docs/assets/screenshots/admin-dashboard.png`
+- `docs/assets/screenshots/pilot-hub.png`
+- `docs/assets/screenshots/readiness-report.png`
+- `docs/assets/screenshots/tool-execution-timeline.png`
+- `docs/assets/screenshots/org-ai-force-demo.gif`
 
-```text
-DATABASE_URL=
-JWT_SECRET=
-OPENAI_API_KEY=
-ANTHROPIC_API_KEY=
-MCP_SERVER_URL=
-APP_BASE_URL=
-API_BASE_URL=
-```
+Capture guidance:
+- [docs/screenshot-capture-guide.md](docs/screenshot-capture-guide.md)
 
-Do not commit real secrets.
+## Security Model
 
----
+- no secrets should be committed to the repo
+- admin and debug routes are permission-gated
+- tool execution and approvals are treated as governed flows
+- mock mode exists for safe demoing when live systems are unavailable
+- Docker and environment templates are examples, not a substitute for real vaulting, HTTPS, or production secret handling
 
-## Important Routes
-
-### Application Routes
-
-```text
-/                  Main application workspace
-/admin             Admin console
-/pilot             Internal pilot hub
-/pilot/metrics     Pilot metrics
-/pilot/readiness   Pilot readiness gate and report
-```
-
-### Pilot API
-
-```text
-POST /pilot/feedback
-GET  /pilot/feedback
-```
-
-`POST /pilot/feedback` is available to authenticated users.
-
-`GET /pilot/feedback` is restricted to admin/debug roles.
-
----
+Start with:
+- [docs/security-model.md](docs/security-model.md)
 
 ## Documentation
 
-### Admin and Operations
+- [System architecture](docs/system-architecture.md)
+- [Agent orchestration](docs/agent-orchestration.md)
+- [RAG and tool layer](docs/rag-and-tool-layer.md)
+- [Admin console](docs/admin-console.md)
+- [Pilot rollout](docs/pilot-rollout.md)
+- [Security model](docs/security-model.md)
+- [Observability](docs/observability.md)
+- [Recruiter review guide](docs/recruiter-review-guide.md)
 
-* [Admin Console Guide](docs/admin-console-guide.md)
-* [Internal Pilot Readiness](docs/internal-pilot-readiness.md)
-* [Observability](docs/observability.md)
+## Recruiter Review
 
-### Pilot Rollout
+For the fastest walkthrough, use:
+- [docs/recruiter-review-guide.md](docs/recruiter-review-guide.md)
 
-* [Internal Pilot Launch Plan](docs/internal-pilot-launch-plan.md)
-* [Pilot User Guide](docs/pilot-user-guide.md)
-* [Pilot Admin Guide](docs/pilot-admin-guide.md)
-* [Pilot Demo Script](docs/pilot-demo-script.md)
-* [Pilot Sample Prompts](docs/pilot-sample-prompts.md)
-* [Pilot Success Metrics](docs/pilot-success-metrics.md)
+## Validation Commands
 
-### Deployment and Database
+Frontend:
 
-* [Deployment Guide](docs/deployment-guide.md)
-* [Database Operations](docs/database-operations.md)
+```bash
+npm run build
+npm run typecheck
+```
 
----
+Backend:
 
-## Security and Governance
+```bash
+cd server
+npm run build
+npm run typecheck
+```
 
-This project is designed with enterprise AI governance in mind:
+Docker:
 
-* Authenticated access for pilot users
-* Permission-gated admin console
-* Restricted metrics and readiness routes
-* No raw credential display in the UI
-* Approval-oriented workflow direction
-* Audit and ops views for admin users
-* Environment-based secret management
-
-Recommended production hardening:
-
-* Use strong JWT secrets
-* Store secrets in a secure vault
-* Enforce HTTPS
-* Add rate limiting
-* Add request validation
-* Add tenant-aware access controls
-* Add audit logs for sensitive tool execution
-* Use least-privilege permissions for tools and connectors
----
-
-## Roadmap
-
-### Current Focus
-
-* Internal pilot workspace
-* Admin console
-* Agent management
-* Tool registry
-* Prompt and workflow management
-* Feedback collection
-* Pilot readiness reporting
-
-### Next Improvements
-
-* Add polished public demo screenshots
-* Add live walkthrough video
-* Improve agent session replay
-* Add richer RAG source citation UI
-* Add MCP tool execution examples
-* Add Playwright-based browser worker demos
-* Add evaluation dashboards
-* Add multi-tenant governance layer
-* Add CI/CD deployment examples
-* Add test coverage reports
-
----
+```bash
+docker compose config
+```
