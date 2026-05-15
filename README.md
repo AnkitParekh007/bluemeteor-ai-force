@@ -116,9 +116,9 @@ npm run start:dev
 - pilot hub with rollout guidance, feedback loops, and readiness framing
 - readiness report showing priority-agent status
 
-## Screenshots And GIF Placeholders
+## Screenshots
 
-Suggested assets:
+Available assets:
 
 - `docs/assets/screenshots/workspace.png`
 - `docs/assets/screenshots/admin-dashboard.png`
@@ -126,6 +126,26 @@ Suggested assets:
 - `docs/assets/screenshots/readiness-report.png`
 - `docs/assets/screenshots/tool-execution-timeline.png`
 - `docs/assets/screenshots/org-ai-force-demo.gif`
+
+<p align="center">
+  <img src="docs/assets/screenshots/workspace.png" alt="Org AI Force workspace screenshot" width="900" />
+</p>
+
+<p align="center">
+  <img src="docs/assets/screenshots/admin-dashboard.png" alt="Org AI Force admin dashboard screenshot" width="900" />
+</p>
+
+<p align="center">
+  <img src="docs/assets/screenshots/pilot-hub.png" alt="Org AI Force pilot hub screenshot" width="900" />
+</p>
+
+<p align="center">
+  <img src="docs/assets/screenshots/readiness-report.png" alt="Org AI Force readiness report screenshot" width="900" />
+</p>
+
+<p align="center">
+  <img src="docs/assets/screenshots/tool-execution-timeline.png" alt="Org AI Force tool execution timeline screenshot" width="900" />
+</p>
 
 Capture guidance:
 - [docs/screenshot-capture-guide.md](docs/screenshot-capture-guide.md)
